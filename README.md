@@ -1,4 +1,4 @@
-# TSE Investigation Hub
+# TSE Investigation Workspace
 
 Centralized workspace for Technical Support Engineers working on Datadog customer cases.
 
