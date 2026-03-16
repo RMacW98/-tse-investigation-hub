@@ -2,178 +2,181 @@
 {% block title %}{{ key }} - TSE Hub{% endblock %}
 
 {% block content %}
-<div class="p-8 max-w-5xl mx-auto animate-in">
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-        <div class="flex items-center gap-4">
-            <a href="/cases" class="text-dd-text-dim hover:text-white transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-            </a>
-            <div>
-                <h1 class="text-xl font-bold text-white tracking-tight font-mono">{{ key }}</h1>
-                {% if readme %}
-                <p class="text-dd-text-muted text-sm mt-0.5">{{ readme.title }}</p>
-                {% elif notes %}
-                <p class="text-dd-text-muted text-sm mt-0.5">{{ notes.title }}</p>
+<div class="animate-in">
+    <!-- Toolbar Header -->
+    <div class="sticky top-0 z-10 toolbar" style="border-bottom: 2px solid var(--c-border);">
+        <div class="max-w-6xl mx-auto px-6 py-2">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2 min-w-0 text-[12px]">
+                    <a href="/cases" class="text-dd-text-dim hover:text-dd-text-muted" style="text-decoration: underline;">Cases</a>
+                    <span class="text-dd-text-dim">&gt;</span>
+                    <span class="font-mono font-bold" style="color: #632CA6;">{{ key }}</span>
+                    <span class="badge badge-{{ status_colors.get(meta.status, 'dim') }}">{{ status_labels.get(meta.status, meta.status) }}</span>
+                    {% if meta.assignee %}
+                    <span class="text-dd-text-dim">{{ meta.assignee }}</span>
+                    {% endif %}
+                </div>
+                <div class="flex items-center gap-2">
+                    {% if prev_key %}
+                    <a href="/case/{{ prev_key }}" class="btn-y2k py-0.5 px-2 text-[11px]" title="{{ prev_key }}">&laquo; Prev</a>
+                    {% endif %}
+                    {% if next_key %}
+                    <a href="/case/{{ next_key }}" class="btn-y2k py-0.5 px-2 text-[11px]" title="{{ next_key }}">Next &raquo;</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto px-6 py-5">
+        <!-- Title area -->
+        <div class="mb-4">
+            <div class="flex items-center gap-2 mb-1">
+                <h1 class="text-lg font-bold" style="color: #1A1A2E;">{{ key }}</h1>
+                {% if notes %}<span class="badge badge-blue">notes</span>{% endif %}
+                {% if readme %}<span class="badge badge-green">readme</span>{% endif %}
+            </div>
+            {% if readme %}
+            <p class="text-dd-text-muted text-[12px]">{{ readme.title }}</p>
+            {% elif notes %}
+            <p class="text-dd-text-muted text-[12px]">{{ notes.title }}</p>
+            {% endif %}
+            <div class="flex items-center gap-3 mt-1 text-[11px] text-dd-text-dim">
+                <span>{{ (other_files|length + (1 if readme else 0) + (1 if notes else 0)) }} files</span>
+                {% if assets %}
+                <span>|</span>
+                <span>{{ assets|length }} asset{{ 's' if assets|length != 1 }}</span>
                 {% endif %}
             </div>
         </div>
-        <div class="flex items-center gap-3">
-            <span class="badge badge-{{ status_colors.get(meta.status, 'dim') }}">{{ status_labels.get(meta.status, meta.status) }}</span>
-            {% if meta.assignee %}
-            <span class="text-xs text-dd-text-dim">{{ meta.assignee }}</span>
-            {% endif %}
-            <!-- Prev/Next nav -->
-            <div class="flex gap-1">
-                {% if prev_key %}
-                <a href="/case/{{ prev_key }}" class="p-1.5 rounded-lg text-dd-text-dim hover:text-white hover:bg-dd-surface-2 transition-colors" title="{{ prev_key }}">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                </a>
-                {% endif %}
-                {% if next_key %}
-                <a href="/case/{{ next_key }}" class="p-1.5 rounded-lg text-dd-text-dim hover:text-white hover:bg-dd-surface-2 transition-colors" title="{{ next_key }}">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </a>
-                {% endif %}
-            </div>
-        </div>
-    </div>
 
-    <!-- Escalation Status (JIRA) - only shown if SCRS tickets are linked -->
-    {% if escalations %}
-    <div class="mb-6">
-        {% for esc in escalations %}
-        <div class="card p-4 mb-3 border-l-4 border-l-dd-blue">
-            <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center gap-2.5">
-                    <svg class="w-4 h-4 text-dd-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-                    <span class="text-sm font-semibold text-white">Escalation: {{ esc.key }}</span>
-                    <span class="badge badge-blue">{{ esc.status }}</span>
-                </div>
-                <a href="{{ esc.url }}" target="_blank" class="text-xs text-dd-purple-light hover:text-white transition-colors flex items-center gap-1">
-                    Open in JIRA
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                </a>
-            </div>
-            <p class="text-sm text-dd-text-muted mb-2">{{ esc.summary }}</p>
-            {% if esc.assignees %}
-            <div class="text-xs text-dd-text-dim mb-2">Assigned to: {{ esc.assignees|join(', ') }}</div>
-            {% endif %}
-            {% if esc.updated %}
-            <div class="text-xs text-dd-text-dim mb-2">Updated: {{ esc.updated }}</div>
-            {% endif %}
-            {% if esc.last_comments %}
-            <div class="mt-3 space-y-2">
-                <div class="text-[10px] font-semibold text-dd-text-dim uppercase tracking-wider">Recent Activity</div>
-                {% for comment in esc.last_comments %}
-                <div class="bg-dd-bg/50 rounded-lg p-3">
-                    <div class="flex items-center gap-2 mb-1">
-                        <span class="text-xs font-medium text-dd-text-muted">{{ comment.author }}</span>
-                        <span class="text-[10px] text-dd-text-dim">{{ comment.date }}</span>
-                    </div>
-                    <p class="text-xs text-dd-text-muted leading-relaxed">{{ comment.body }}</p>
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <!-- Tabs -->
-    <div class="flex gap-1 mb-4" id="content-tabs">
-        {% if readme %}
-        <button onclick="showTab('readme')" class="tab-pill active" data-tab="readme">README</button>
-        {% endif %}
-        {% if notes %}
-        <button onclick="showTab('notes')" class="tab-pill {{ 'active' if not readme else '' }}" data-tab="notes">Notes</button>
-        {% endif %}
-        {% for name in other_files %}
-        <button onclick="showTab('file-{{ loop.index }}')" class="tab-pill" data-tab="file-{{ loop.index }}">{{ name }}</button>
-        {% endfor %}
-        {% if assets %}
-        <button onclick="showTab('assets')" class="tab-pill" data-tab="assets">Assets ({{ assets|length }})</button>
-        {% endif %}
-        {% if sources %}
-        <button onclick="showTab('sources')" class="tab-pill" data-tab="sources">Sources ({{ sources_count }})</button>
-        {% endif %}
-    </div>
-
-    <!-- Tab Content -->
-    {% if readme %}
-    <div class="tab-content" id="tab-readme">
-        <div class="card p-6">
-            <div class="md-content">{{ readme.html|safe }}</div>
-            <div class="mt-4 pt-3 border-t border-dd-border text-xs text-dd-text-dim">
-                {{ readme.path }} &middot; {{ readme.modified.strftime('%b %d, %Y at %I:%M %p') }}
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    {% if notes %}
-    <div class="tab-content {{ 'hidden' if readme else '' }}" id="tab-notes">
-        <div class="card p-6">
-            <div class="md-content">{{ notes.html|safe }}</div>
-            <div class="mt-4 pt-3 border-t border-dd-border text-xs text-dd-text-dim">
-                {{ notes.path }} &middot; {{ notes.modified.strftime('%b %d, %Y at %I:%M %p') }}
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    {% for name, data in other_files.items() %}
-    <div class="tab-content hidden" id="tab-file-{{ loop.index }}">
-        <div class="card p-6">
-            <div class="md-content">{{ data.html|safe }}</div>
-            <div class="mt-4 pt-3 border-t border-dd-border text-xs text-dd-text-dim">
-                {{ data.path }} &middot; {{ data.modified.strftime('%b %d, %Y at %I:%M %p') }}
-            </div>
-        </div>
-    </div>
-    {% endfor %}
-
-    {% if assets %}
-    <div class="tab-content hidden" id="tab-assets">
-        <div class="card p-6">
-            <h3 class="text-sm font-semibold text-white mb-4">Assets</h3>
-            <div class="space-y-2">
-                {% for asset in assets %}
-                <div class="flex items-center gap-3 p-3 bg-dd-bg/50 rounded-lg">
-                    <svg class="w-4 h-4 text-dd-text-dim flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    <div class="flex-1 min-w-0">
-                        <div class="text-sm text-dd-text truncate">{{ asset.name }}</div>
-                        <div class="text-[10px] text-dd-text-dim">{{ asset.path }}</div>
-                    </div>
-                    <span class="text-[10px] text-dd-text-dim tabular-nums flex-shrink-0">
-                        {% if asset.size < 1024 %}{{ asset.size }} B
-                        {% elif asset.size < 1048576 %}{{ (asset.size / 1024)|round(1) }} KB
-                        {% else %}{{ (asset.size / 1048576)|round(1) }} MB
-                        {% endif %}
-                    </span>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    {% if sources %}
-    <div class="tab-content hidden" id="tab-sources">
-        <div class="card p-6">
-            <h3 class="text-sm font-semibold text-white mb-4">Data Sources</h3>
-            <div class="space-y-4">
-                {% for source in sources %}
-                <div>
-                    <div class="text-xs font-semibold text-dd-text-dim uppercase tracking-wider mb-2">{{ source.label }}</div>
-                    <div class="space-y-1.5">
-                        {% for ref in source.refs %}
+        <!-- Escalation Status (JIRA) -->
+        {% if escalations %}
+        <div class="mb-4">
+            {% for esc in escalations %}
+            <div class="card mb-3 overflow-hidden" style="border-left: 4px solid #632CA6;">
+                <div class="p-4">
+                    <div class="flex items-center justify-between mb-2">
                         <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4" style="color: #632CA6;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                            <span class="text-[12px] font-bold" style="color: #1A1A2E;">Escalation: {{ esc.key }}</span>
+                            <span class="badge badge-blue">{{ esc.status }}</span>
+                        </div>
+                        <a href="{{ esc.url }}" target="_blank" class="btn-y2k inline-flex items-center gap-1 text-[11px]">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                            Open in JIRA
+                        </a>
+                    </div>
+                    <p class="text-[12px] text-dd-text-muted mb-2">{{ esc.summary }}</p>
+                    {% if esc.assignees %}
+                    <div class="text-[11px] text-dd-text-dim mb-2">Assigned to: {{ esc.assignees|join(', ') }}</div>
+                    {% endif %}
+                    {% if esc.updated %}
+                    <div class="text-[11px] text-dd-text-dim mb-2">Updated: {{ esc.updated }}</div>
+                    {% endif %}
+                    {% if esc.last_comments %}
+                    <div class="mt-3 space-y-2">
+                        <div class="text-[10px] font-bold text-dd-text-dim uppercase tracking-wider">Recent Activity</div>
+                        {% for comment in esc.last_comments %}
+                        <div class="p-2.5" style="background: #F5F0FA; border: 1px inset #D8CCE8; border-radius: 2px;">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-[11px] font-bold text-dd-text-muted">{{ comment.author }}</span>
+                                <span class="text-[10px] text-dd-text-dim">{{ comment.date }}</span>
+                            </div>
+                            <p class="text-[11px] text-dd-text-muted leading-relaxed">{{ comment.body }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Classic Tab navigation -->
+        <div class="flex items-end gap-0" id="tab-nav" style="border-bottom: 1px solid var(--c-border); margin-bottom: 0;">
+            {% if readme %}
+            <button onclick="showTab('readme')" class="tab-pill active" data-tab="readme">README</button>
+            {% endif %}
+            {% if notes %}
+            <button onclick="showTab('notes')" class="tab-pill {{ 'active' if not readme else '' }}" data-tab="notes">Notes</button>
+            {% endif %}
+            {% for name, data in other_files.items() %}
+            <button onclick="showTab('file-{{ loop.index }}')" class="tab-pill" data-tab="file-{{ loop.index }}">
+                {{ name.replace('.md', '').replace('_', ' ').title() }}
+            </button>
+            {% endfor %}
+            {% if sources %}
+            <button onclick="showTab('sources')" class="tab-pill" data-tab="sources">Sources ({{ sources_count }})</button>
+            {% endif %}
+            {% if assets %}
+            <button onclick="showTab('assets')" class="tab-pill" data-tab="assets">Assets ({{ assets|length }})</button>
+            {% endif %}
+        </div>
+
+        <!-- Tab content -->
+        {% if readme %}
+        <div id="tab-readme" class="tab-content">
+            <div class="card overflow-hidden" style="border-top: none; border-radius: 0 0 3px 3px;">
+                <div class="flex items-center justify-between px-4 py-2" style="background: #F0EBF5; border-bottom: 1px solid #D8CCE8;">
+                    <span class="text-[11px] text-dd-text-dim font-mono">{{ readme.path }}</span>
+                    <span class="text-[11px] text-dd-text-dim">{{ readme.modified.strftime('%b %d, %Y') }}</span>
+                </div>
+                <div class="px-6 py-5 bg-white">
+                    <div class="md-content max-w-none">{{ readme.html|safe }}</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if notes %}
+        <div id="tab-notes" class="tab-content {{ 'hidden' if readme else '' }}">
+            <div class="card overflow-hidden" style="border-top: none; border-radius: 0 0 3px 3px;">
+                <div class="flex items-center justify-between px-4 py-2" style="background: #F0EBF5; border-bottom: 1px solid #D8CCE8;">
+                    <span class="text-[11px] text-dd-text-dim font-mono">{{ notes.path }}</span>
+                    <span class="text-[11px] text-dd-text-dim">{{ notes.modified.strftime('%b %d, %Y') }}</span>
+                </div>
+                <div class="px-6 py-5 bg-white">
+                    <div class="md-content max-w-none">{{ notes.html|safe }}</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% for name, data in other_files.items() %}
+        <div id="tab-file-{{ loop.index }}" class="tab-content hidden">
+            <div class="card overflow-hidden" style="border-top: none; border-radius: 0 0 3px 3px;">
+                <div class="flex items-center justify-between px-4 py-2" style="background: #F0EBF5; border-bottom: 1px solid #D8CCE8;">
+                    <span class="text-[11px] text-dd-text-dim font-mono">{{ data.path }}</span>
+                    <span class="text-[11px] text-dd-text-dim">{{ data.modified.strftime('%b %d, %Y') }}</span>
+                </div>
+                <div class="px-6 py-5 bg-white">
+                    <div class="md-content max-w-none">{{ data.html|safe }}</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if sources %}
+        <div id="tab-sources" class="tab-content hidden">
+            <div class="space-y-3 mt-3">
+                {% for source in sources %}
+                <div class="card overflow-hidden">
+                    <div class="win-titlebar flex items-center gap-2">
+                        <span>{{ source.label }}</span>
+                        <span class="badge" style="background: rgba(255,255,255,0.2); color: #FFF; border-color: rgba(255,255,255,0.3); font-size: 10px;">{{ source.refs|length }}</span>
+                    </div>
+                    <div>
+                        {% for ref in source.refs %}
+                        <div class="alt-row px-4 py-2" style="border-bottom: 1px solid #D8CCE8;">
                             {% if ref.url %}
-                            <a href="{{ ref.url }}" target="_blank" class="text-sm text-dd-purple-light hover:text-white transition-colors truncate">{{ ref.display }}</a>
+                            <a href="{{ ref.url }}" target="_blank" class="text-[12px] font-mono font-bold" style="color: #632CA6; text-decoration: underline;">{{ ref.display }}</a>
                             {% else %}
-                            <span class="text-sm text-dd-text-muted">{{ ref.display }}</span>
+                            <span class="text-[12px] font-mono font-bold text-dd-text-muted">{{ ref.display }}</span>
+                            {% endif %}
+                            {% if ref.context %}
+                            <p class="text-[11px] text-dd-text-dim mt-0.5">{{ ref.context }}</p>
                             {% endif %}
                         </div>
                         {% endfor %}
@@ -182,25 +185,53 @@
                 {% endfor %}
             </div>
         </div>
-    </div>
-    {% endif %}
+        {% endif %}
 
-    {% if not readme and not notes and not other_files %}
-    <div class="card p-12 text-center">
-        <p class="text-dd-text-muted">No markdown files found in this case folder.</p>
-        <p class="text-xs text-dd-text-dim mt-2">Add a <code class="text-dd-purple-light">README.md</code> or <code class="text-dd-purple-light">notes.md</code> to get started.</p>
+        {% if assets %}
+        <div id="tab-assets" class="tab-content hidden">
+            <div class="card overflow-hidden mt-3">
+                <div class="win-titlebar">Assets ({{ assets|length }})</div>
+                {% for asset in assets %}
+                <div class="alt-row px-4 py-2 flex items-center gap-3" style="border-bottom: 1px solid #D8CCE8;">
+                    <svg class="w-4 h-4 flex-shrink-0 text-dd-text-dim" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    <span class="text-[12px] font-mono" style="color: #1A1A2E;">{{ asset.name }}</span>
+                    <span class="text-[11px] text-dd-text-dim ml-auto">
+                        {% if asset.size > 1048576 %}{{ "%.1f"|format(asset.size / 1048576) }} MB{% elif asset.size > 1024 %}{{ "%.1f"|format(asset.size / 1024) }} KB{% else %}{{ asset.size }} B{% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if not readme and not notes and not other_files %}
+        <div class="text-center py-16">
+            <p class="text-xs font-bold" style="color: #1A1A2E;">No case files yet</p>
+            <p class="text-[11px] text-dd-text-dim mt-1">Add <code style="color: #632CA6;">README.md</code> or <code style="color: #632CA6;">notes.md</code> to get started.</p>
+        </div>
+        {% endif %}
+
+        {% if prev_key or next_key %}
+        <div class="flex items-center justify-between mt-6 pt-4" style="border-top: 2px solid var(--c-border);">
+            {% if prev_key %}
+            <a href="/case/{{ prev_key }}" class="btn-y2k text-[11px] inline-flex items-center gap-1">&laquo; {{ prev_key }}</a>
+            {% else %}<div></div>{% endif %}
+            {% if next_key %}
+            <a href="/case/{{ next_key }}" class="btn-y2k text-[11px] inline-flex items-center gap-1">{{ next_key }} &raquo;</a>
+            {% else %}<div></div>{% endif %}
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
 </div>
 
 <script>
-function showTab(tabId) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-    document.querySelectorAll('#content-tabs .tab-pill').forEach(btn => btn.classList.remove('active'));
-    const target = document.getElementById('tab-' + tabId);
-    if (target) target.classList.remove('hidden');
-    const btn = document.querySelector(`[data-tab="${tabId}"]`);
-    if (btn) btn.classList.add('active');
-}
+    function showTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.tab-pill').forEach(el => el.classList.remove('active'));
+        const content = document.getElementById('tab-' + tabName);
+        if (content) content.classList.remove('hidden');
+        const btn = document.querySelector(`[data-tab="${tabName}"]`);
+        if (btn) btn.classList.add('active');
+    }
 </script>
 {% endblock %}

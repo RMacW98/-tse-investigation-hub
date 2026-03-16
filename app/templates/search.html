@@ -2,47 +2,81 @@
 {% block title %}{% if query %}Search: {{ query }}{% else %}Search{% endif %} - TSE Hub{% endblock %}
 
 {% block content %}
-<div class="p-8 max-w-4xl mx-auto animate-in">
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-white tracking-tight">Search</h1>
+<div class="p-6 max-w-5xl mx-auto animate-in">
+    <div class="mb-4">
+        <h1 class="text-xl font-bold" style="color: #1A202C;">Search</h1>
+        {% if query %}
+        <p class="text-dd-text-dim mt-0.5 text-xs">{{ results|length }} result{{ 's' if results|length != 1 }} for "{{ query }}"</p>
+        {% else %}
+        <p class="text-dd-text-dim mt-0.5 text-xs">Search across all cases, archive, solutions, and templates</p>
+        {% endif %}
     </div>
 
-    <form action="/search" method="GET" class="mb-6">
-        <div class="relative">
-            <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-dd-text-dim" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-            <input type="text" name="q" value="{{ query }}" placeholder="Search cases, archive, solutions, templates..."
-                class="w-full bg-dd-surface border border-dd-border rounded-xl pl-12 pr-4 py-3 text-sm placeholder-dd-text-dim focus:outline-none focus:border-dd-purple/50 focus:ring-1 focus:ring-dd-purple/30 text-dd-text transition-colors"
-                autofocus>
+    <!-- Search bar -->
+    <form action="/search" method="GET" class="mb-5">
+        <div class="flex gap-2">
+            <div class="relative flex-1">
+                <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-dd-text-dim" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text" name="q" value="{{ query }}" autofocus
+                    placeholder="Search by keyword, ticket number, product area..."
+                    class="input-y2k w-full pl-8 pr-3 py-2 text-[13px]">
+            </div>
+            <button type="submit" class="btn-y2k-blue text-[12px] px-4">Search</button>
         </div>
     </form>
 
     {% if query %}
-    <div class="text-sm text-dd-text-dim mb-4">{{ results|length }} result{{ 's' if results|length != 1 else '' }} for "{{ query }}"</div>
-
-    <div class="space-y-3">
+    <!-- Results -->
+    <div class="card overflow-hidden">
+        <div class="win-titlebar">Search Results</div>
         {% for r in results %}
         <a href="{% if r.section == 'cases' %}/case/{{ r.path.split('/')[1] }}{% elif r.section == 'archive' %}/archive/{{ r.path.split('/')[1] }}/{{ r.path.split('/')[2].replace('.md', '') }}{% elif r.section == 'templates' %}/templates/{{ r.path.split('/')[1] }}/{{ r.path.split('/')[2] }}{% else %}/search?q={{ query }}{% endif %}"
-           class="card card-glow block p-4 group">
-            <div class="flex items-center gap-2.5 mb-1">
-                <span class="badge badge-dim">{{ r.section }}</span>
-                <span class="text-sm font-medium text-white group-hover:text-dd-purple-light transition-colors">{{ r.title }}</span>
+           class="alt-row block px-4 py-3 group" style="border-bottom: 1px solid #D8CCE8; text-decoration: none; color: inherit;">
+            <div class="flex items-center gap-2 mb-1">
+                <span class="badge
+                    {% if r.section == 'cases' %}badge-purple
+                    {% elif r.section == 'archive' %}badge-green
+                    {% elif r.section == 'templates' %}badge-amber
+                    {% else %}badge-blue{% endif %}">{{ r.section }}</span>
+                <span class="text-[11px] text-dd-text-dim font-mono">{{ r.path }}</span>
             </div>
-            <div class="text-xs text-dd-text-dim mb-2">{{ r.path }}</div>
-            {% for snippet in r.snippets %}
-            <div class="bg-dd-bg/50 rounded-lg p-2.5 mt-2 text-xs text-dd-text-muted font-mono leading-relaxed overflow-x-auto whitespace-pre-wrap">{{ snippet }}</div>
-            {% endfor %}
+            <div class="text-[12px] font-bold group-hover:text-[#632CA6]" style="color: #1A1A2E;">{{ r.title }}</div>
+            {% if r.snippets %}
+            <div class="mt-1.5 space-y-1">
+                {% for snippet in r.snippets[:2] %}
+                <div class="text-[11px] text-dd-text-dim font-mono px-2 py-1" style="background: #F5F0FA; border: 1px inset #D8CCE8; border-radius: 2px;">{{ snippet[:200] }}{% if snippet|length > 200 %}...{% endif %}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
         </a>
         {% endfor %}
-    </div>
 
-    {% if not results %}
-    <div class="card p-8 text-center">
-        <p class="text-dd-text-muted">No results found for "{{ query }}"</p>
-        <p class="text-xs text-dd-text-dim mt-2">Try a different search term or check spelling.</p>
+        {% if not results %}
+        <div class="px-4 py-12 text-center">
+            <p class="text-xs font-bold" style="color: #1A1A2E;">No results found</p>
+            <p class="text-[11px] text-dd-text-dim mt-1">Try different keywords or check your spelling.</p>
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
+    {% else %}
+    <!-- Empty state -->
+    <div class="card overflow-hidden">
+        <div class="win-titlebar">Search</div>
+        <div class="px-4 py-10 text-center">
+            <p class="text-xs font-bold" style="color: #1A1A2E;">Search your workspace</p>
+            <p class="text-[11px] text-dd-text-dim mb-4">Type a query above or try one of these:</p>
+            <div class="flex flex-wrap justify-center gap-2">
+                <a href="/search?q=APM" class="btn-y2k text-[11px]">APM</a>
+                <a href="/search?q=infrastructure" class="btn-y2k text-[11px]">Infrastructure</a>
+                <a href="/search?q=logs" class="btn-y2k text-[11px]">Logs</a>
+                <a href="/search?q=security" class="btn-y2k text-[11px]">Security</a>
+                <a href="/search?q=RUM" class="btn-y2k text-[11px]">RUM</a>
+                <a href="/search?q=escalation" class="btn-y2k text-[11px]">Escalation</a>
+            </div>
+        </div>
+    </div>
     {% endif %}
 </div>
 {% endblock %}

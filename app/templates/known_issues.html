@@ -2,27 +2,40 @@
 {% block title %}Known Issues - TSE Hub{% endblock %}
 
 {% block content %}
-<div class="p-8 max-w-4xl mx-auto animate-in">
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-white tracking-tight">Known Issues</h1>
-        <p class="text-dd-text-dim mt-1 text-sm">Product bugs, workarounds, and limitations</p>
+<div class="animate-in">
+    <!-- Toolbar Header -->
+    <div class="sticky top-0 z-10 toolbar" style="border-bottom: 2px solid var(--c-border);">
+        <div class="max-w-5xl mx-auto px-6 py-2">
+            <div class="flex items-center gap-2 text-[12px]">
+                <a href="/" class="text-dd-text-dim hover:text-dd-text-muted" style="text-decoration: underline;">Dashboard</a>
+                <span class="text-dd-text-dim">&gt;</span>
+                <span class="font-bold" style="color: #1A202C;">Known Issues</span>
+            </div>
+        </div>
     </div>
 
-    {% if known_issues %}
-    <div class="card p-6">
-        <div class="md-content">{{ known_issues.html|safe }}</div>
-        <div class="mt-6 pt-3 border-t border-dd-border text-xs text-dd-text-dim">
-            {{ known_issues.path }} &middot; Last updated {{ known_issues.modified.strftime('%b %d, %Y at %I:%M %p') }}
+    <div class="max-w-5xl mx-auto px-6 py-5">
+        <div class="mb-4">
+            <h1 class="text-xl font-bold" style="color: #1A1A2E;">Known Issues</h1>
+            <p class="text-dd-text-dim mt-0.5 text-xs">Product bugs, workarounds, and limitations</p>
         </div>
-    </div>
-    {% else %}
-    <div class="card p-12 text-center">
-        <div class="w-12 h-12 bg-dd-surface-2 rounded-xl flex items-center justify-center mx-auto mb-4">
-            <svg class="w-6 h-6 text-dd-text-dim" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+
+        {% if known_issues %}
+        <div class="card overflow-hidden">
+            <div class="flex items-center justify-between px-4 py-2" style="background: #F0EBF5; border-bottom: 1px solid #D8CCE8;">
+                <span class="text-[11px] text-dd-text-dim font-mono">{{ known_issues.path }}</span>
+                <span class="text-[11px] text-dd-text-dim">{{ known_issues.modified.strftime('%b %d, %Y') }}</span>
+            </div>
+            <div class="px-6 py-5 bg-white">
+                <div class="md-content max-w-none">{{ known_issues.html|safe }}</div>
+            </div>
         </div>
-        <p class="text-white font-medium mb-1">No known issues file</p>
-        <p class="text-sm text-dd-text-dim">Create <code class="text-dd-purple-light">solutions/known-issues.md</code> to track product bugs and workarounds.</p>
+        {% else %}
+        <div class="text-center py-16">
+            <p class="text-xs font-bold" style="color: #1A1A2E;">No known issues file</p>
+            <p class="text-[11px] text-dd-text-dim mt-1">Create <code style="color: #632CA6;">solutions/known-issues.md</code> to track product bugs and workarounds.</p>
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
 </div>
 {% endblock %}

@@ -2,45 +2,74 @@
 {% block title %}Cases - TSE Hub{% endblock %}
 
 {% block content %}
-<div class="p-8 max-w-6xl mx-auto animate-in">
-    <div class="flex items-center justify-between mb-6">
+<div class="p-6 max-w-6xl mx-auto animate-in">
+    <div class="flex items-center justify-between mb-4">
         <div>
-            <h1 class="text-2xl font-bold text-white tracking-tight">Cases</h1>
-            <p class="text-dd-text-dim mt-1 text-sm">{{ cases|length }} active case{{ 's' if cases|length != 1 else '' }}</p>
+            <h1 class="text-xl font-bold" style="color: #1A202C;">Cases</h1>
+            <p class="text-dd-text-dim mt-0.5 text-xs" id="results-count">{{ cases|length }} case{{ 's' if cases|length != 1 }}</p>
         </div>
     </div>
 
-    <!-- Filters -->
     {% if cases %}
-    <div class="flex flex-wrap gap-2 mb-6" id="filters">
-        <button onclick="filterCases('all')" class="tab-pill active" data-filter="all">All</button>
-        {% for status in statuses %}
-        <button onclick="filterCases('status-{{ status }}')" class="tab-pill" data-filter="status-{{ status }}">
-            <span class="inline-block w-1.5 h-1.5 rounded-full mr-1.5
-                {% if status == 'new' %}bg-dd-purple-light
-                {% elif status == 'investigating' %}bg-dd-blue
-                {% elif status == 'waiting-on-customer' %}bg-dd-amber
-                {% elif status == 'escalated' %}bg-dd-red
-                {% elif status == 'resolved' %}bg-dd-green
-                {% endif %}"></span>
-            {{ status_labels[status] }}
-        </button>
-        {% endfor %}
-        {% for area in product_areas %}
-        <button onclick="filterCases('area-{{ area }}')" class="tab-pill" data-filter="area-{{ area }}">{{ area_labels.get(area, area) }}</button>
-        {% endfor %}
-    </div>
-    {% endif %}
+    <!-- Filter Toolbar -->
+    <div class="toolbar mb-4 flex flex-wrap items-center gap-3" style="border: 1px solid var(--c-border); border-radius: 3px;">
+        <!-- Status Filter -->
+        <div class="flex items-center gap-1.5">
+            <span class="text-[10px] font-bold text-dd-text-dim uppercase mr-0.5">Status:</span>
+            <button onclick="filterStatus('all')" data-status-filter="all" class="status-filter-btn btn-y2k text-[11px] py-0.5 px-2 active" style="font-size: 11px;">All</button>
+            {% for status in statuses %}
+            <button onclick="filterStatus('{{ status }}')" data-status-filter="{{ status }}" class="status-filter-btn btn-y2k text-[11px] py-0.5 px-2">
+                <span class="flex items-center gap-1">
+                    <span class="w-2 h-2" style="
+                        {% if status == 'new' %}background: #7B42BC;
+                        {% elif status == 'investigating' %}background: #632CA6;
+                        {% elif status == 'waiting-on-customer' %}background: #E5A000;
+                        {% elif status == 'escalated' %}background: #D94848;
+                        {% elif status == 'resolved' %}background: #2CC3A0;
+                        {% endif %}"></span>
+                    {{ status_labels[status] }}
+                </span>
+            </button>
+            {% endfor %}
+        </div>
 
-    <!-- Case Cards -->
-    <div class="space-y-2" id="case-list">
+        {% if product_areas and product_areas|length > 1 %}
+        <div style="width: 1px; height: 20px; background: var(--c-border);"></div>
+
+        <div class="flex items-center gap-1.5">
+            <span class="text-[10px] font-bold text-dd-text-dim uppercase mr-0.5">Area:</span>
+            <button onclick="filterArea('all')" data-area-filter="all" class="area-filter-btn btn-y2k text-[11px] py-0.5 px-2 active">All</button>
+            {% for area in product_areas %}
+            <button onclick="filterArea('{{ area }}')" data-area-filter="{{ area }}" class="area-filter-btn btn-y2k text-[11px] py-0.5 px-2">{{ area_labels.get(area, area|capitalize) }}</button>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <style>
+        .btn-y2k.active { border-style: inset; background: linear-gradient(180deg, #DDD4EC 0%, #F0EBF5 100%); font-weight: 700; }
+    </style>
+
+    <!-- Case Table -->
+    <div class="card overflow-hidden" id="case-grid">
+        <div class="win-titlebar">{{ cases|length }} Case{{ 's' if cases|length != 1 }}</div>
         {% for c in cases %}
-        <a href="/case/{{ c.key }}" class="card card-glow block px-5 py-4 group case-card"
-           data-status="status-{{ c.status }}" data-area="area-{{ c.product_area }}">
-            <div class="flex items-center justify-between gap-4">
+        <a href="/case/{{ c.key }}"
+           class="case-card alt-row block px-4 py-2.5 group"
+           data-status="{{ c.status }}"
+           data-area="{{ c.product_area }}"
+           style="border-bottom: 1px solid #D8CCE8; display: flex; text-decoration: none; color: inherit;">
+            <div class="flex items-center justify-between gap-3 w-full">
                 <div class="min-w-0 flex-1">
-                    <div class="flex items-center gap-2.5 flex-wrap">
-                        <span class="text-sm font-mono font-semibold text-dd-purple-light group-hover:text-white transition-colors">{{ c.key }}</span>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-[12px] font-mono font-bold" style="color: #632CA6;">{{ c.key }}</span>
+                        <span class="w-2 h-2 flex-shrink-0" style="
+                            {% if c.status == 'new' %}background: #7B42BC;
+                            {% elif c.status == 'investigating' %}background: #632CA6;
+                            {% elif c.status == 'waiting-on-customer' %}background: #E5A000;
+                            {% elif c.status == 'escalated' %}background: #D94848;
+                            {% elif c.status == 'resolved' %}background: #2CC3A0;
+                            {% endif %}" title="{{ status_labels.get(c.status, c.status) }}"></span>
                         <span class="badge badge-{{ status_colors.get(c.status, 'dim') }}">{{ status_labels.get(c.status, c.status) }}</span>
                         {% if c.product_area != 'other' %}
                         <span class="badge badge-dim">{{ area_labels.get(c.product_area, c.product_area) }}</span>
@@ -49,47 +78,76 @@
                         <span class="badge badge-dim">{{ c.priority }}</span>
                         {% endif %}
                     </div>
-                    <div class="text-sm text-dd-text-muted mt-1 truncate">{{ c.title }}</div>
+                    <div class="text-[12px] text-dd-text-muted mt-0.5 truncate">{{ c.title }}</div>
                 </div>
-                <div class="flex items-center gap-4 flex-shrink-0">
+                <div class="flex items-center gap-3 flex-shrink-0 text-[11px] text-dd-text-dim">
                     {% if c.assignee %}
-                    <span class="text-[11px] text-dd-text-dim">{{ c.assignee }}</span>
+                    <span>{{ c.assignee }}</span>
                     {% endif %}
                     {% if c.last_modified %}
-                    <span class="text-xs text-dd-text-dim tabular-nums">{{ c.last_modified.strftime('%b %d, %H:%M') }}</span>
+                    <span class="tabular-nums">{{ c.last_modified.strftime('%b %d') }}</span>
                     {% endif %}
-                    <svg class="w-4 h-4 text-dd-text-dim group-hover:text-dd-purple-light transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    <span class="text-dd-text-dim group-hover:text-[#632CA6]">&rsaquo;</span>
                 </div>
             </div>
         </a>
         {% endfor %}
     </div>
 
-    {% if not cases %}
-    <div class="card p-12 text-center">
-        <div class="w-12 h-12 bg-dd-surface-2 rounded-xl flex items-center justify-center mx-auto mb-4">
-            <svg class="w-6 h-6 text-dd-text-dim" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-        </div>
-        <p class="text-white font-medium mb-1">No active cases</p>
-        <p class="text-sm text-dd-text-dim">Create a <code class="text-dd-purple-light">cases/ZD-XXXXXX/</code> folder to start an investigation.</p>
+    <!-- Empty filter state -->
+    <div id="empty-filter" class="hidden text-center py-12">
+        <p class="text-xs font-bold" style="color: #1A1A2E;">No matching cases</p>
+        <p class="text-[11px] text-dd-text-dim mt-1">Try adjusting your filters.</p>
+    </div>
+
+    {% else %}
+    <div class="text-center py-16">
+        <p class="text-xs font-bold" style="color: #1A1A2E;">No active cases</p>
+        <p class="text-[11px] text-dd-text-dim mt-1">Cases will appear here when you create folders in <code style="color: #632CA6;">cases/</code></p>
     </div>
     {% endif %}
 </div>
 
 <script>
-function filterCases(filter) {
-    document.querySelectorAll('#filters .tab-pill').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.filter === filter);
-    });
-    document.querySelectorAll('.case-card').forEach(card => {
-        if (filter === 'all') {
-            card.style.display = '';
+    let activeStatus = 'all';
+    let activeArea = 'all';
+
+    function filterStatus(status) {
+        activeStatus = status;
+        document.querySelectorAll('.status-filter-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`[data-status-filter="${status}"]`).classList.add('active');
+        applyFilters();
+    }
+
+    function filterArea(area) {
+        activeArea = area;
+        document.querySelectorAll('.area-filter-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`[data-area-filter="${area}"]`).classList.add('active');
+        applyFilters();
+    }
+
+    function applyFilters() {
+        const cards = document.querySelectorAll('.case-card');
+        let visible = 0;
+        cards.forEach(card => {
+            const status = card.dataset.status;
+            const area = card.dataset.area;
+            const statusMatch = activeStatus === 'all' || status === activeStatus;
+            const areaMatch = activeArea === 'all' || area === activeArea;
+            const show = statusMatch && areaMatch;
+            card.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+        const total = cards.length;
+        const countEl = document.getElementById('results-count');
+        const anyFilter = activeStatus !== 'all' || activeArea !== 'all';
+        if (!anyFilter) {
+            countEl.textContent = `${total} case${total !== 1 ? 's' : ''}`;
         } else {
-            const matchesStatus = card.dataset.status === filter;
-            const matchesArea = card.dataset.area === filter;
-            card.style.display = (matchesStatus || matchesArea) ? '' : 'none';
+            countEl.textContent = `Showing ${visible} of ${total} case${total !== 1 ? 's' : ''}`;
         }
-    });
-}
+        document.getElementById('empty-filter').classList.toggle('hidden', visible > 0);
+        document.getElementById('case-grid').classList.toggle('hidden', visible === 0);
+    }
 </script>
 {% endblock %}
