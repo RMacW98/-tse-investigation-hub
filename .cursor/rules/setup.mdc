@@ -52,7 +52,7 @@ After the script succeeds, tell the user:
 
 1. **Restart Cursor** -- Quit completely with Cmd+Q (not just close the window), then reopen the workspace.
 2. **SSO login** -- The first time they use Atlassian or Glean, a browser window will open for SSO login. This is a one-time step.
-3. **Verify** -- After restarting, try: "Search JIRA for open SCRS tickets" to confirm MCP servers loaded.
+3. **Verify** -- After restarting, try: "Search JIRA for recent escalation tickets" to confirm MCP servers loaded.
 
 # Reconfiguring
 

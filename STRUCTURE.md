@@ -28,7 +28,7 @@ tse-investigation-hub/
 security-tee-hub/
 ├── investigations/           # Internal escalations (JIRA tickets)
 │   ├── .template/
-│   └── SCRS-XXXX/           # JIRA escalation folders
+│   └── PROJ-XXXX/           # JIRA escalation folders
 ├── docs/                    # Security-specific docs only
 │   ├── appsec/
 │   ├── siem/
@@ -69,7 +69,7 @@ security-tee-hub/
 
 ### TEE Workflow
 ```
-1. TSE escalates via JIRA (SCRS project)
+1. TSE escalates via JIRA
 2. TEE investigates using TEE hub
 3. TEE performs deep investigation
 4. If bug → TEE escalates to Engineering

@@ -23,7 +23,7 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 
 ATLASSIAN_MCP_URL = "https://mcp.atlassian.com/v1/mcp"
 GLEAN_MCP_URL = "https://datadog-be.glean.com/mcp/default"
-JIRA_PROJECT_KEY = "SCRS"
+JIRA_PROJECT_KEY = ""
 
 
 def prompt(msg: str, default: str = "", required: bool = True) -> str:
@@ -95,8 +95,8 @@ def write_env(github_token: str = "") -> Path:
     env_path = ROOT_DIR / ".env"
 
     lines = [
-        "# JIRA Project Configuration",
-        f"JIRA_PROJECT_KEY={JIRA_PROJECT_KEY}",
+        "# JIRA Project Configuration (set to your team's project key, e.g. SCRS, APMS, SDBM)",
+        "# JIRA_PROJECT_KEY=",
         "",
         "# GitHub Configuration (optional)",
         f"GITHUB_TOKEN={github_token}" if github_token else "# GITHUB_TOKEN=",
@@ -171,9 +171,9 @@ def main():
     print("  1. Restart Cursor (Cmd+Q, then reopen)")
     print("  2. Atlassian and Glean will prompt SSO login on first use")
     if github_token:
-        print("  3. Test: \"Search JIRA for open SCRS tickets\"")
+        print("  3. Test: \"Search JIRA for recent escalation tickets\"")
     else:
-        print("  3. Test: \"Search JIRA for open SCRS tickets\"")
+        print("  3. Test: \"Search JIRA for recent escalation tickets\"")
         print("     (GitHub skipped -- add later with --reconfigure)")
     print()
 

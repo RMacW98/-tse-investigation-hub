@@ -1,6 +1,6 @@
 # JIRA Escalation Template
 
-Use this template when creating a JIRA escalation ticket (SCRS project).
+Use this template when creating a JIRA escalation ticket.
 
 ---
 
@@ -200,7 +200,7 @@ Memory leak appears to be in ddtrace 2.6.0 itself (regression from 2.5.0). Needs
 - **Workaround Available:** Yes - downgrade to ddtrace 2.5.0 (customer testing now)
 
 **Additional Context:**
-- Similar case: SCRS-1234 (memory leak in Java tracer, fixed in 1.2.3)
+- Similar case: PROJ-1234 (memory leak in Java tracer, fixed in 1.2.3)
 - Checked release notes: ddtrace 2.6.0 mentioned "improved memory efficiency" - possible regression?
 - Customer can provide heap dumps if needed
 

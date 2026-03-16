@@ -26,7 +26,7 @@ That's it. The setup script configures everything:
 
 Quit completely (Cmd+Q), reopen. Atlassian and Glean will prompt a one-time SSO login on first use.
 
-Test it: *"Search JIRA for open SCRS tickets"*
+Test it: *"Search JIRA for recent escalation tickets"*
 
 ---
 

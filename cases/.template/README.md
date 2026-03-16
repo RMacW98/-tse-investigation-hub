@@ -58,7 +58,7 @@
 ## Investigation Links
 
 - **Zendesk Ticket:** https://[subdomain].zendesk.com/agent/tickets/XXXXXX
-- **Related JIRA:** [If escalated: SCRS-XXXX]
+- **Related JIRA:** [If escalated: PROJ-XXXX]
 - **Datadog Dashboard:** [Link to relevant dashboard]
 - **Host/Service Link:** [Link to specific host/service in Datadog]
 
@@ -85,7 +85,7 @@ Store relevant files in the `assets/` folder:
   - See `solutions/known-issues.md`
   
 - **Related JIRA Tickets:**
-  - [SCRS-XXXX] - [description]
+  - [PROJ-XXXX] - [description]
 
 ---
 

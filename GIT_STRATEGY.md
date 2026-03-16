@@ -139,7 +139,7 @@ This document outlines what should and shouldn't be committed to git for team sh
 🟡 solutions/known-issues.md      # Updated with new bugs
    - ✅ DO commit updates to share with team
    - ❌ DON'T include customer names
-   - ✅ DO reference JIRA tickets (SCRS-XXXX)
+   - ✅ DO reference JIRA tickets (PROJ-XXXX)
    - ❌ DON'T reference Zendesk tickets (ZD-XXXXX)
 ```
 

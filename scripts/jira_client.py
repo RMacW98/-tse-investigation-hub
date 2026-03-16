@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-JIRA Client for Security TEE Hub
+JIRA Client for TSE Investigation Hub
 
-Utility for querying and archiving JIRA tickets from the SCRS project.
+Utility for querying and archiving JIRA tickets.
 Reads credentials from ../.env file.
 
 Usage:
-    python jira_client.py get SCRS-1885           # Get single issue
+    python jira_client.py get PROJ-1885           # Get single issue
     python jira_client.py search "status = Open"  # Search with JQL
-    python jira_client.py archive SCRS-1885       # Archive to ../archive/
+    python jira_client.py archive PROJ-1885       # Archive to ../archive/
 """
 
 import os
@@ -41,7 +41,7 @@ ENV = load_env()
 DOMAIN = ENV.get("ATLASSIAN_DOMAIN", "datadoghq.atlassian.net")
 EMAIL = ENV.get("ATLASSIAN_EMAIL")
 TOKEN = ENV.get("ATLASSIAN_API_TOKEN")
-PROJECT = ENV.get("JIRA_PROJECT_KEY", "SCRS")
+PROJECT = ENV.get("JIRA_PROJECT_KEY", "")
 
 def make_request(endpoint: str) -> dict:
     """Make authenticated request to JIRA API."""

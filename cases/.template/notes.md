@@ -195,7 +195,7 @@ See `assets/screenshots/`:
 **If Yes:**
 
 **Escalation Date:** YYYY-MM-DD
-**JIRA Ticket:** SCRS-XXXX
+**JIRA Ticket:** PROJ-XXXX
 **Reason for Escalation:**
 [Why this needs TEE/engineering attention]
 
@@ -256,7 +256,7 @@ See `assets/screenshots/`:
 
 ### Similar Cases
 - ZD-XXXXX - [How it relates]
-- SCRS-YYYY - [How it relates]
+- PROJ-YYYY - [How it relates]
 
 ### Useful Resources
 - [Resource 1]

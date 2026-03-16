@@ -90,15 +90,15 @@ def _extract_jira_activity(issue: dict, max_comments: int = 2) -> dict:
     }
 
 
-def extract_scrs_keys(text: str) -> list[str]:
-    """Find all SCRS-XXXX references in text."""
-    return sorted(set(re.findall(r"\bSCRS-\d+\b", text)))
+def extract_jira_keys(text: str) -> list[str]:
+    """Find all JIRA ticket references (e.g. SCRS-1234, APMS-567) in text."""
+    return sorted(set(re.findall(r"\b[A-Z][A-Z0-9]+-\d+\b", text)))
 
 
-def fetch_escalations(scrs_keys: list[str]) -> list[dict]:
-    """Fetch JIRA details for a list of SCRS keys."""
+def fetch_escalations(jira_keys: list[str]) -> list[dict]:
+    """Fetch JIRA details for a list of JIRA keys."""
     results = []
-    for key in scrs_keys:
+    for key in jira_keys:
         issue = _jira_fetch(key)
         if issue:
             results.append(_extract_jira_activity(issue))
@@ -243,7 +243,7 @@ _SOURCE_TYPES = [
     ("jira", "JIRA", [
         re.compile(r"https?://datadoghq\.atlassian\.net/browse/([\w-]+)", re.I),
     ], [
-        re.compile(r"\b(SCRS-\d+|SECENG-\d+)\b"),
+        re.compile(r"\b([A-Z][A-Z0-9]+-\d+)\b"),
     ]),
     ("zendesk", "Zendesk", [
         re.compile(r"https?://[\w.-]*zendesk\.com[\w/._?&#%-]*", re.I),
@@ -618,8 +618,8 @@ def case_detail(key):
         all_raw += fdata["raw"] + "\n"
     sources = extract_sources(all_raw)
 
-    scrs_keys = extract_scrs_keys(all_raw)
-    escalations = fetch_escalations(scrs_keys) if scrs_keys else []
+    jira_keys = extract_jira_keys(all_raw)
+    escalations = fetch_escalations(jira_keys) if jira_keys else []
 
     return render_template(
         "case_detail.html",

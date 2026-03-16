@@ -29,7 +29,7 @@ If you want code search, generate a PAT at [github.com/settings/tokens](https://
 Ask Cursor things like:
 
 - *"Investigate Zendesk ticket 12345"* -- fetches the ticket, searches for similar cases, creates investigation notes
-- *"Search JIRA for open SCRS tickets"* -- queries escalation tickets
+- *"Search JIRA for open escalation tickets"* -- queries escalation tickets
 - *"Search Confluence for APM troubleshooting"* -- finds internal docs
 - *"Search Glean for recent security product updates"* -- searches Slack, Confluence, everything
 - *"Draft a customer response for ZD-12345"* -- uses communication templates

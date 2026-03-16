@@ -23,7 +23,7 @@ Track active product bugs and limitations here. Update as issues are fixed.
 ### APM
 
 #### Python Tracer Memory Leak in Django 4.2
-- **JIRA:** SCRS-XXXX
+- **JIRA:** PROJ-XXXX
 - **Affected Versions:** ddtrace 2.6.0+
 - **Symptoms:** Memory usage grows continuously until OOM
 - **Workaround:** Downgrade to ddtrace 2.5.x
@@ -31,7 +31,7 @@ Track active product bugs and limitations here. Update as issues are fixed.
 - **Related Zendesk Cases:** ZD-12345, ZD-12389
 
 #### Node.js Tracer Not Capturing Express Routes with Regex
-- **JIRA:** SCRS-XXXX
+- **JIRA:** PROJ-XXXX
 - **Affected Versions:** dd-trace-js 4.x
 - **Symptoms:** Routes defined with regex patterns not traced
 - **Workaround:** Use string paths instead of regex, or manually instrument
@@ -43,7 +43,7 @@ Track active product bugs and limitations here. Update as issues are fixed.
 ### Infrastructure Monitoring
 
 #### Agent 7.50.x High CPU on Large Docker Environments
-- **JIRA:** SCRS-XXXX
+- **JIRA:** PROJ-XXXX
 - **Affected Versions:** Agent 7.50.0 - 7.50.3
 - **Symptoms:** Agent using 50-100% CPU on hosts with 100+ containers
 - **Workaround:** Disable live containers check: `container_collection.enabled: false`
@@ -55,7 +55,7 @@ Track active product bugs and limitations here. Update as issues are fixed.
 ### Logs
 
 #### Log Pipeline Processor Dropping Logs Over 256KB
-- **JIRA:** SCRS-XXXX
+- **JIRA:** PROJ-XXXX
 - **Affected Versions:** All
 - **Symptoms:** Large logs silently dropped by pipeline processors
 - **Workaround:** Use log truncation before sending to Datadog, or split large logs
@@ -67,7 +67,7 @@ Track active product bugs and limitations here. Update as issues are fixed.
 ### RUM
 
 #### Session Replay Missing First 5 Seconds After Page Load
-- **JIRA:** SCRS-XXXX
+- **JIRA:** PROJ-XXXX
 - **Affected Versions:** RUM Browser SDK 4.40.x - 4.42.x
 - **Symptoms:** First few seconds of session not captured in replay
 - **Workaround:** Upgrade to 4.43.0+
@@ -79,7 +79,7 @@ Track active product bugs and limitations here. Update as issues are fixed.
 ### Synthetics
 
 #### API Tests Failing with "Connection Reset" from US1 Locations
-- **JIRA:** SCRS-XXXX
+- **JIRA:** PROJ-XXXX
 - **Affected Versions:** N/A (infrastructure issue)
 - **Symptoms:** Intermittent connection reset errors from AWS:us-east-1 location
 - **Workaround:** Use alternative US locations (us-west-2, us-central-1)
@@ -91,7 +91,7 @@ Track active product bugs and limitations here. Update as issues are fixed.
 ### Security (AppSec)
 
 #### PHP Tracer Crashing with Opcache Enabled
-- **JIRA:** SCRS-XXXX
+- **JIRA:** PROJ-XXXX
 - **Affected Versions:** dd-trace-php 0.95.0 - 0.96.x
 - **Symptoms:** PHP-FPM workers crash when opcache + tracer both enabled
 - **Workaround:** Disable opcache.jit: `opcache.jit=0`
@@ -104,7 +104,7 @@ Track active product bugs and limitations here. Update as issues are fixed.
 ### Code Security
 
 #### Duplicate Committer Billing from Email Variations
-- **JIRA:** SCRS-1747
+- **JIRA:** PROJ-1747
 - **Affected Versions:** All
 - **Symptoms:** Same developer counted multiple times as separate committers due to different email addresses (work email, personal email, GitHub noreply variations). Results in unexpected billing spikes.
 - **Example:** 
@@ -130,7 +130,7 @@ Track active product bugs and limitations here. Update as issues are fixed.
 - **Documentation:** See `cases/ZD-2488538/INVESTIGATION_SUMMARY.md` for detailed troubleshooting
 
 #### Bot Accounts Not Filtered in Committer Billing
-- **JIRA:** SCRS-1747 (related)
+- **JIRA:** PROJ-1747 (related)
 - **Affected Versions:** All
 - **Symptoms:** CI/CD automation bots (Dependabot, Renovate, custom bots) counted as committers, causing unexpected billing
 - **Known Filtered Bots:** `noreply@github.com`, `actions@github.com`, `*@users.noreply.github.com`
@@ -162,14 +162,14 @@ Track active product bugs and limitations here. Update as issues are fixed.
 ## Recently Resolved (Last 30 Days)
 
 ### Agent Flare Command Hanging on macOS 14.x
-- **JIRA:** SCRS-1234
+- **JIRA:** PROJ-1234
 - **Fixed In:** Agent 7.51.0 (released 2026-01-28)
 - **Symptoms:** `datadog-agent flare` would hang indefinitely on macOS Sonoma
 - **What Changed:** Fixed file descriptor leak in flare generation
 - **Affected Customers:** ZD-11890, ZD-11901
 
 ### Dashboard API Returning 500 for Large Time Ranges
-- **JIRA:** SCRS-1567
+- **JIRA:** PROJ-1567
 - **Fixed In:** Platform release 2026-01-25
 - **Symptoms:** Dashboard API calls with >30 day time range returned 500
 - **What Changed:** Increased query timeout and added pagination
@@ -209,7 +209,7 @@ When you discover a new confirmed bug:
 
 ```markdown
 #### [Brief Description]
-- **JIRA:** SCRS-XXXX
+- **JIRA:** PROJ-XXXX
 - **Affected Versions:** [version range]
 - **Symptoms:** [what customer sees]
 - **Workaround:** [if available, otherwise "None available"]

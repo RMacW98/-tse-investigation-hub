@@ -171,7 +171,7 @@ Use the template in `templates/escalation/escalation-template.md`
 > "Create JIRA escalation for ZD-12345"
 
 # Option 2: Manual
-# Go to JIRA, create SCRS ticket, use template
+# Go to JIRA, create escalation ticket, use template
 ```
 
 ### 3. Notify Customer

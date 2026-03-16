@@ -168,7 +168,7 @@ When communicating with customers:
 **Create JIRA escalation:**
 > "Create JIRA escalation ticket for ZD-12345"
 
-Cursor will help create the SCRS ticket with proper formatting.
+Cursor will help create the escalation ticket with proper formatting.
 
 ## Folder Structure
 

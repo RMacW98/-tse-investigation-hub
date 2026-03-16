@@ -62,7 +62,7 @@ Cursor will:
 Ask Cursor:
 > "Create JIRA escalation for ZD-12345"
 
-Cursor will help you create a properly formatted SCRS ticket.
+Cursor will help you create a properly formatted escalation ticket.
 
 ### Resolved the Issue?
 ```bash
@@ -145,11 +145,11 @@ python3 scripts/zendesk_client.py archive 12345
 
 ### JIRA (for escalations)
 ```bash
-# Search SCRS project
-python3 scripts/jira_client.py search "project = SCRS AND status = Open"
+# Search escalation tickets (replace PROJECT with your JIRA project key)
+python3 scripts/jira_client.py search "project = PROJECT AND status = Open"
 
 # Get escalation details
-python3 scripts/jira_client.py get SCRS-1234
+python3 scripts/jira_client.py get PROJECT-1234
 ```
 
 ### Using Cursor AI
