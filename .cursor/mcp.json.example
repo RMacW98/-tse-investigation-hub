@@ -1,26 +1,10 @@
 {
   "mcpServers": {
-    "zendesk": {
-      "command": "python3",
-      "args": [
-        "scripts/zendesk_mcp_server.py",
-        "--subdomain", "datadog",
-        "--email", "your.email@datadoghq.com",
-        "--token", "YOUR_ZENDESK_API_TOKEN"
-      ]
-    },
     "atlassian": {
-      "command": "uvx",
-      "args": [
-        "mcp-atlassian",
-        "--jira-url", "https://datadoghq.atlassian.net",
-        "--jira-username", "your.email@datadoghq.com",
-        "--jira-token", "YOUR_ATLASSIAN_API_TOKEN",
-        "--confluence-url", "https://datadoghq.atlassian.net/wiki",
-        "--confluence-username", "your.email@datadoghq.com",
-        "--confluence-token", "YOUR_ATLASSIAN_API_TOKEN",
-        "--read-only"
-      ]
+      "url": "https://mcp.atlassian.com/v1/mcp"
+    },
+    "glean_default": {
+      "url": "https://datadog-be.glean.com/mcp/default"
     },
     "github": {
       "command": "uvx",

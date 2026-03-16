@@ -2,12 +2,13 @@
 """
 TSE Investigation Hub - Automated Setup
 
-Configures .env and .cursor/mcp.json from provided credentials.
-Can be run interactively or with CLI arguments (for agent use).
+Configures .cursor/mcp.json with MCP servers (Atlassian via SSO, Glean via SSO,
+GitHub via PAT). Atlassian and Glean use SSO URLs -- no tokens needed.
 
 Usage:
     Interactive:  python3 scripts/setup.py
-    With args:    python3 scripts/setup.py --email you@datadoghq.com --zendesk-token XXX --atlassian-token YYY
+    With args:    python3 scripts/setup.py --github-token XXX
+    Minimal:      python3 scripts/setup.py --skip-github
 """
 
 import argparse
@@ -20,13 +21,12 @@ from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 
-# Datadog-specific defaults
-ZENDESK_SUBDOMAIN = "datadog"
-ATLASSIAN_DOMAIN = "datadoghq.atlassian.net"
+ATLASSIAN_MCP_URL = "https://mcp.atlassian.com/v1/mcp"
+GLEAN_MCP_URL = "https://datadog-be.glean.com/mcp/default"
 JIRA_PROJECT_KEY = "SCRS"
 
 
-def prompt(msg: str, default: str = "", required: bool = True, secret: bool = False) -> str:
+def prompt(msg: str, default: str = "", required: bool = True) -> str:
     """Prompt the user for input with optional default."""
     suffix = f" [{default}]" if default else ""
     while True:
@@ -60,21 +60,41 @@ def install_uv() -> bool:
         return False
 
 
-def write_env(email: str, zendesk_token: str, atlassian_token: str, github_token: str) -> Path:
-    """Generate .env file."""
+def write_mcp_json(github_token: str = "") -> Path:
+    """Generate .cursor/mcp.json with SSO-based servers + optional GitHub."""
+    cursor_dir = ROOT_DIR / ".cursor"
+    cursor_dir.mkdir(exist_ok=True)
+    mcp_path = cursor_dir / "mcp.json"
+
+    config: dict = {"mcpServers": {}}
+
+    # Atlassian: SSO-based, no token needed
+    config["mcpServers"]["atlassian"] = {
+        "url": ATLASSIAN_MCP_URL,
+    }
+
+    # Glean: SSO-based, no token needed
+    config["mcpServers"]["glean_default"] = {
+        "url": GLEAN_MCP_URL,
+    }
+
+    # GitHub: needs a PAT
+    if github_token:
+        config["mcpServers"]["github"] = {
+            "command": "uvx",
+            "args": ["mcp-github"],
+            "env": {"GITHUB_TOKEN": github_token},
+        }
+
+    mcp_path.write_text(json.dumps(config, indent=2) + "\n")
+    return mcp_path
+
+
+def write_env(github_token: str = "") -> Path:
+    """Generate .env file for scripts that need credentials."""
     env_path = ROOT_DIR / ".env"
 
     lines = [
-        "# Zendesk Configuration",
-        f"ZENDESK_SUBDOMAIN={ZENDESK_SUBDOMAIN}",
-        f"ZENDESK_EMAIL={email}",
-        f"ZENDESK_API_TOKEN={zendesk_token}",
-        "",
-        "# Atlassian Configuration (JIRA & Confluence)",
-        f"ATLASSIAN_DOMAIN={ATLASSIAN_DOMAIN}",
-        f"ATLASSIAN_EMAIL={email}",
-        f"ATLASSIAN_API_TOKEN={atlassian_token}",
-        "",
         "# JIRA Project Configuration",
         f"JIRA_PROJECT_KEY={JIRA_PROJECT_KEY}",
         "",
@@ -90,49 +110,6 @@ def write_env(email: str, zendesk_token: str, atlassian_token: str, github_token
     return env_path
 
 
-def write_mcp_json(email: str, zendesk_token: str, atlassian_token: str, github_token: str) -> Path:
-    """Generate .cursor/mcp.json."""
-    cursor_dir = ROOT_DIR / ".cursor"
-    cursor_dir.mkdir(exist_ok=True)
-    mcp_path = cursor_dir / "mcp.json"
-
-    config: dict = {"mcpServers": {}}
-
-    config["mcpServers"]["zendesk"] = {
-        "command": "python3",
-        "args": [
-            "scripts/zendesk_mcp_server.py",
-            "--subdomain", ZENDESK_SUBDOMAIN,
-            "--email", email,
-            "--token", zendesk_token,
-        ],
-    }
-
-    config["mcpServers"]["atlassian"] = {
-        "command": "uvx",
-        "args": [
-            "mcp-atlassian",
-            "--jira-url", f"https://{ATLASSIAN_DOMAIN}",
-            "--jira-username", email,
-            "--jira-token", atlassian_token,
-            "--confluence-url", f"https://{ATLASSIAN_DOMAIN}/wiki",
-            "--confluence-username", email,
-            "--confluence-token", atlassian_token,
-            "--read-only",
-        ],
-    }
-
-    if github_token:
-        config["mcpServers"]["github"] = {
-            "command": "uvx",
-            "args": ["mcp-github"],
-            "env": {"GITHUB_TOKEN": github_token},
-        }
-
-    mcp_path.write_text(json.dumps(config, indent=2) + "\n")
-    return mcp_path
-
-
 def ensure_directories():
     """Create required directories if they don't exist."""
     for name in ["cases", "archive"]:
@@ -142,10 +119,8 @@ def ensure_directories():
 
 def main():
     parser = argparse.ArgumentParser(description="TSE Investigation Hub Setup")
-    parser.add_argument("--email", help="Your work email (used for Zendesk and Atlassian)")
-    parser.add_argument("--zendesk-token", help="Zendesk API token")
-    parser.add_argument("--atlassian-token", help="Atlassian API token")
     parser.add_argument("--github-token", default="", help="GitHub PAT (optional)")
+    parser.add_argument("--skip-github", action="store_true", help="Skip GitHub setup")
     parser.add_argument("--reconfigure", action="store_true", help="Overwrite existing config files")
     args = parser.parse_args()
 
@@ -153,60 +128,53 @@ def main():
     print("  TSE Investigation Hub - Setup")
     print("=" * 50)
 
-    env_path = ROOT_DIR / ".env"
     mcp_path = ROOT_DIR / ".cursor" / "mcp.json"
 
-    if env_path.exists() and not args.reconfigure:
-        if not any([args.email, args.zendesk_token, args.atlassian_token]):
-            resp = input("\n.env already exists. Overwrite? [y/N]: ").strip().lower()
+    if mcp_path.exists() and not args.reconfigure:
+        if not args.github_token and not args.skip_github:
+            resp = input("\n.cursor/mcp.json already exists. Overwrite? [y/N]: ").strip().lower()
             if resp != "y":
                 print("Setup cancelled. Use --reconfigure to force.")
                 sys.exit(0)
 
-    interactive = not all([args.email, args.zendesk_token, args.atlassian_token])
+    github_token = args.github_token
+    if not github_token and not args.skip_github:
+        print("\nAtlassian and Glean use SSO -- no tokens needed.")
+        print("GitHub requires a Personal Access Token (optional).\n")
+        github_token = prompt("GitHub PAT (Enter to skip)", required=False)
 
-    if interactive:
-        print("\nI need a few credentials to configure the workspace.")
-        print("See the README for where to generate each token.\n")
-        email = args.email or prompt("Work email")
-        zendesk_token = args.zendesk_token or prompt("Zendesk API token")
-        atlassian_token = args.atlassian_token or prompt("Atlassian API token")
-        github_token = args.github_token or prompt("GitHub PAT (Enter to skip)", required=False)
-    else:
-        email = args.email
-        zendesk_token = args.zendesk_token
-        atlassian_token = args.atlassian_token
-        github_token = args.github_token
-
-    print("\nWriting .env ...")
-    write_env(email, zendesk_token, atlassian_token, github_token)
-    print(f"  -> {env_path}")
-
-    print("Writing .cursor/mcp.json ...")
-    write_mcp_json(email, zendesk_token, atlassian_token, github_token)
+    print("\nWriting .cursor/mcp.json ...")
+    write_mcp_json(github_token)
     print(f"  -> {mcp_path}")
+
+    print("Writing .env ...")
+    env_path = write_env(github_token)
+    print(f"  -> {env_path}")
 
     ensure_directories()
 
-    if not check_uv():
-        print("\nuv/uvx not found (needed for Atlassian and GitHub MCP servers).")
-        if interactive:
-            resp = input("Install uv now? [Y/n]: ").strip().lower()
-            if resp != "n":
-                install_uv()
-            else:
-                print("Skipped. Install later: curl -LsSf https://astral.sh/uv/install.sh | sh")
-        else:
+    if github_token and not check_uv():
+        print("\nuv/uvx not found (needed for GitHub MCP server).")
+        resp = input("Install uv now? [Y/n]: ").strip().lower()
+        if resp != "n":
             install_uv()
-    else:
+        else:
+            print("Skipped. Install later: curl -LsSf https://astral.sh/uv/install.sh | sh")
+    elif github_token:
         print("\nuv/uvx found.")
 
     print("\n" + "=" * 50)
     print("  Setup complete!")
     print("=" * 50)
     print()
-    print("Next step: Restart Cursor (Cmd+Q, then reopen).")
-    print("Then try: \"Investigate Zendesk ticket 12345\"")
+    print("Next steps:")
+    print("  1. Restart Cursor (Cmd+Q, then reopen)")
+    print("  2. Atlassian and Glean will prompt SSO login on first use")
+    if github_token:
+        print("  3. Test: \"Search JIRA for open SCRS tickets\"")
+    else:
+        print("  3. Test: \"Search JIRA for open SCRS tickets\"")
+        print("     (GitHub skipped -- add later with --reconfigure)")
     print()
 
 

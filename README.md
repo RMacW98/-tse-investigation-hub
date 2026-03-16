@@ -4,29 +4,25 @@ Centralized Cursor workspace for Datadog Technical Support Engineers. Investigat
 
 ## Setup (2 minutes)
 
-**Prerequisites:** [Cursor](https://cursor.com), Python 3.8+, Git
+**Prerequisites:** [Cursor](https://cursor.com), Git
 
 1. **Clone and open**
    ```bash
-   git clone git@github.com:YOUR_ORG/tse-investigation-hub.git
-   cd tse-investigation-hub
+   git clone https://github.com/eoghanm2013/tse-investigation-hub.git
    ```
    Open the folder in Cursor.
 
 2. **Tell Cursor: "Set me up"**
-   Cursor will ask for your tokens and configure everything automatically.
+   Cursor runs the setup script. Atlassian and Glean use SSO (no tokens needed). You'll optionally be asked for a GitHub PAT.
 
 3. **Restart Cursor** (Cmd+Q, then reopen)
+   Atlassian and Glean will prompt a one-time SSO login on first use.
 
 That's it.
 
-### Where to get tokens
+### Optional: GitHub token
 
-| Token | Where |
-|-------|-------|
-| **Zendesk** | Admin Center > Apps and integrations > APIs > Zendesk API > Add API Token |
-| **Atlassian** | https://id.atlassian.com/manage-profile/security/api-tokens |
-| **GitHub** (optional) | https://github.com/settings/tokens?type=beta -- needs Contents + Metadata read; authorize SSO for DataDog org |
+If you want code search, generate a PAT at [github.com/settings/tokens](https://github.com/settings/tokens?type=beta) with Contents + Metadata read. Authorize SSO for the DataDog org.
 
 ## What you can do
 
@@ -35,6 +31,7 @@ Ask Cursor things like:
 - *"Investigate Zendesk ticket 12345"* -- fetches the ticket, searches for similar cases, creates investigation notes
 - *"Search JIRA for open SCRS tickets"* -- queries escalation tickets
 - *"Search Confluence for APM troubleshooting"* -- finds internal docs
+- *"Search Glean for recent security product updates"* -- searches Slack, Confluence, everything
 - *"Draft a customer response for ZD-12345"* -- uses communication templates
 
 ## Structure
@@ -45,13 +42,13 @@ archive/         Resolved cases by month (gitignored)
 docs/            Product troubleshooting docs
 solutions/       Known issues and workarounds
 templates/       Customer communication and escalation templates
-scripts/         Utility scripts (Zendesk client, JIRA client, setup)
+scripts/         Utility scripts (setup, Zendesk client, JIRA client)
 reference/       JIRA project codes, internal references
 ```
 
 ## Reconfiguring
 
-Need to update tokens? Tell Cursor *"reconfigure my workspace"* or run:
+Need to add GitHub or update config? Tell Cursor *"reconfigure my workspace"* or run:
 ```bash
 python3 scripts/setup.py --reconfigure
 ```
@@ -59,5 +56,5 @@ python3 scripts/setup.py --reconfigure
 ## Safety
 
 - All `cases/` and `archive/` folders are gitignored (customer data never committed)
-- Credentials stay local in `.env` (gitignored)
+- Credentials stay local (gitignored)
 - Cursor confirms before sending public comments to customers
