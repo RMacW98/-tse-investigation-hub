@@ -91,7 +91,7 @@ def _extract_jira_activity(issue: dict, max_comments: int = 2) -> dict:
 
 
 def extract_jira_keys(text: str) -> list[str]:
-    """Find all JIRA ticket references (e.g. SCRS-1234, APMS-567) in text."""
+    """Find all JIRA ticket references (e.g. APMS-1234, LOGS-567) in text."""
     return sorted(set(re.findall(r"\b[A-Z][A-Z0-9]+-\d+\b", text)))
 
 

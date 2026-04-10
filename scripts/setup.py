@@ -97,7 +97,7 @@ def write_env(github_token: str = "") -> Path:
     env_path = ROOT_DIR / ".env"
 
     lines = [
-        "# JIRA Project Configuration (set to your team's project key, e.g. SCRS, APMS, SDBM)",
+        "# JIRA Project Configuration (set to your team's project key, e.g. APMS, SDBM, LOGS)",
         "# JIRA_PROJECT_KEY=",
         "",
         "# GitHub Configuration (optional)",
