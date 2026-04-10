@@ -46,7 +46,25 @@ python3 scripts/setup.py --github-token "GITHUB_TOKEN"
 
 If the user already has a `.cursor/mcp.json` and wants to reconfigure, add `--reconfigure`.
 
-## Step 3: Post-setup instructions
+## Step 3: Clean up user-local skills (if any)
+
+Skills are now bundled in the workspace at `.cursor/skills/`. If the user previously had skills installed at `~/.cursor/skills/zendesk-ticket/`, they must be removed to avoid duplicates and path conflicts.
+
+Check and remove:
+
+```
+if [ -d ~/.cursor/skills/zendesk-ticket ]; then
+  echo "Removing old user-local skills (now bundled in workspace)..."
+  rm -rf ~/.cursor/skills/zendesk-ticket
+fi
+if [ -d ~/.cursor/skills/_shared ] && [ -f ~/.cursor/skills/_shared/zd-api.sh ]; then
+  rm -rf ~/.cursor/skills/_shared
+fi
+```
+
+Only remove `zendesk-ticket/` and `_shared/` — leave any other personal skills in `~/.cursor/skills/` untouched.
+
+## Step 4: Post-setup instructions
 
 After the script succeeds, tell the user:
 
