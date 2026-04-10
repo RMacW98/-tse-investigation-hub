@@ -172,7 +172,7 @@ Cursor will help create the escalation ticket with proper formatting.
 
 ## Available Skills
 
-These Cursor skills are installed at `~/.cursor/skills/` and should be used during investigations:
+These Cursor skills are installed in the workspace at `.cursor/skills/` and should be used during investigations:
 
 | Skill | Trigger | What It Does |
 |-------|---------|-------------|
@@ -199,7 +199,7 @@ Skills write to `cases/ZD-{id}/` with these files:
 - `assets/` — Downloaded attachments, extracted flares
 
 ### Chrome JS Bridge (Required for Skills)
-Skills use `~/.cursor/skills/_shared/zd-api.sh` which requires:
+Skills use `.cursor/skills/_shared/zd-api.sh` which requires:
 - macOS with Google Chrome running
 - A tab open on `datadog.zendesk.com`
 - "Allow JavaScript from Apple Events" enabled (one-time: Chrome → View → Developer menu)
@@ -228,15 +228,31 @@ tse-investigation-hub/
 └── scripts/            # Utility scripts (zendesk_client.py, jira_client.py)
 ```
 
-## Product Areas
-- **APM** — Application Performance Monitoring, distributed tracing, profiling
-- **Infrastructure** — Host monitoring, containers, Kubernetes, agent
-- **Logs** — Log management, pipelines, parsing, archives
-- **RUM** — Real User Monitoring, Session Replay, browser SDK
-- **Synthetics** — Synthetic monitoring, API tests, browser tests
-- **Security** — AppSec, SIEM, CWS, CSPM, Vulnerability Management
-- **Network** — Network Performance Monitoring, NetFlow, DNS
-- **Platform** — Billing, API, authentication, SSO, integrations, dashboards
+## Product Areas & TEE Boards
+
+Each product area maps to a TEE escalation board in JIRA. The web app auto-detects the area and suggests the board.
+
+| Area | TEE Board | Project Key |
+|------|-----------|-------------|
+| Agent | Support - Agent Escalations | AGENT |
+| APM | Support - APM | SRTEE |
+| Containers | Support - Containers | CONS |
+| Cloud / CCM | Support - Cloud | CLOUDS |
+| Database Monitoring | Support - DBM | DBM |
+| Logs | Support - Logs | LOGSS |
+| Metrics | Support - Metrics | METS |
+| Monitors | Support - Monitors | MNTS |
+| Network | Support - Network | NETS |
+| OpenTelemetry | Support - OTel | OTELS |
+| Profiling | Support - Profiling | SCP |
+| RUM | Support - RUM | RUMS |
+| Security | Support - Security | SCRS |
+| Serverless | Support - Serverless | SLES |
+| Service Management | Support - SOCE | SOCE |
+| Synthetics | Support - Synthetics | SYN |
+| Web Platform | Support - Web Platform | WEBPS |
+
+Full TEE directory: https://datadoghq.atlassian.net/wiki/spaces/TS/pages/2542502723
 
 ## Tone & Approach
 

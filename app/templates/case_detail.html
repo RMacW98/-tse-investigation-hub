@@ -360,6 +360,17 @@
                         <div class="flex-1">
                             <label class="text-[11px] font-bold text-dd-text-dim uppercase tracking-wider block mb-1">Product Area</label>
                             <input type="text" id="esc-area" class="input-y2k w-full" readonly style="background: #F5F0FA; color: #4A4560;">
+                            <div id="esc-board-info" class="hidden mt-1.5 rounded" style="background: #EEF6FF; border: 1px solid #B8D4F0; padding: 6px 8px;">
+                                <div class="flex items-center gap-1.5 mb-1">
+                                    <svg class="w-3 h-3" style="color: #1A6DD4;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
+                                    <span class="text-[10px] font-bold" style="color: #1A6DD4;">TEE Escalation Board</span>
+                                </div>
+                                <a id="esc-board-link" href="#" target="_blank" class="text-[11px] font-mono font-bold inline-flex items-center gap-1" style="color: #1A6DD4; text-decoration: none;">
+                                    <span id="esc-board-project"></span>
+                                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                </a>
+                                <span id="esc-board-team" class="text-[10px] ml-2" style="color: #4A7AB5;"></span>
+                            </div>
                         </div>
                     </div>
 
@@ -522,6 +533,16 @@
                 document.getElementById('esc-priority').value = data.priority || 'Medium';
                 document.getElementById('esc-area').value = data.product_area || '';
 
+                const boardInfo = document.getElementById('esc-board-info');
+                if (data.tee_board) {
+                    document.getElementById('esc-board-link').href = data.tee_board.url;
+                    document.getElementById('esc-board-project').textContent = data.tee_board.project;
+                    document.getElementById('esc-board-team').textContent = `(${data.tee_board.team})`;
+                    boardInfo.classList.remove('hidden');
+                } else {
+                    boardInfo.classList.add('hidden');
+                }
+
                 // Support Admin Links (Partlow)
                 _escSALinks = data.support_admin_links || [];
                 const saSection = document.getElementById('esc-sa-links-section');
@@ -674,8 +695,27 @@
         const area = document.getElementById('esc-area').value;
         const description = document.getElementById('esc-description').value;
 
-        const full = `Summary: ${summary}\nPriority: ${priority}\nProduct Area: ${area}\n\n${description}`;
-        navigator.clipboard.writeText(full).then(() => {
+        const boardLink = document.getElementById('esc-board-link');
+        const boardProject = document.getElementById('esc-board-project').textContent;
+        const boardLine = boardProject ? `TEE Board: ${boardProject} — ${boardLink.href}` : '';
+        let parts = [`Summary: ${summary}`, `Priority: ${priority}`, `Product Area: ${area}`];
+        if (boardLine) parts.push(boardLine);
+        parts.push('', description);
+
+        if (_escSALinks.length) {
+            parts.push('\n--- Support Admin Links ---');
+            _escSALinks.forEach(l => parts.push(`- ${l.label}: ${l.url}`));
+        }
+        if (_escInvLinks.length) {
+            parts.push('\n--- Investigation Links ---');
+            _escInvLinks.forEach(l => parts.push(`- ${l.label}: ${l.url}`));
+        }
+        if (_escOtherLinks.length) {
+            parts.push('\n--- Other Links ---');
+            _escOtherLinks.forEach(u => parts.push(`- ${typeof u === 'string' ? u : u.url}`));
+        }
+
+        navigator.clipboard.writeText(parts.join('\n')).then(() => {
             const label = document.getElementById('copy-all-label');
             label.textContent = 'Copied to clipboard!';
             setTimeout(() => { label.textContent = 'Copy Everything'; }, 2000);

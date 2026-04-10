@@ -244,39 +244,81 @@ def _read_meta(case_dir: Path) -> dict:
 # ── Product Area Detection ───────────────────────────────────────────────────
 
 PRODUCT_AREA_RULES = [
-    ("apm", "APM", [
-        r"\bapm\b", r"\btrac(e|es|ing)\b", r"\bprofil(e|er|ing)\b",
-        r"\bspan\b", r"\bservice\s*map", r"\bdd-trace",
+    ("agent", "Agent", [
+        r"\bagent\s*(v?\d|check|flare|config|log|install|upgrad)",
+        r"\bdatadog[\s-]*agent\b", r"\bprocess[\s-]*agent\b",
+        r"\bsystem[\s-]*probe\b", r"\bflare\b",
+        r"\bibm[\s_]mq\b", r"\bintegration\s*(check|error|config)",
     ]),
-    ("infrastructure", "Infrastructure", [
-        r"\binfrastructure\b", r"\bagent\s*(v?\d|check|flare|config)",
-        r"\bhost\s*monitor", r"\bcontainer\s*monitor",
-        r"\bkubernetes\b", r"\becs\b", r"\bprocess\s*agent",
+    ("apm", "APM", [
+        r"\bapm\b", r"\btrac(e|es|ing)\b", r"\bdd[\s-]*trace\b",
+        r"\bspan\b", r"\bservice[\s-]*map", r"\bddtrace\b",
+        r"\btrace[\s-]*agent\b",
+    ]),
+    ("containers", "Containers", [
+        r"\bcontainer\b", r"\bkubernetes\b", r"\bk8s\b", r"\becs\b",
+        r"\bdocker\b", r"\bhelm\b", r"\bcluster[\s-]*agent\b",
+        r"\bdaemonset\b", r"\bpod\b",
+    ]),
+    ("cloud", "Cloud / CCM", [
+        r"\baws\s*integrat", r"\bazure\s*integrat", r"\bgcp\s*integrat",
+        r"\bcloud\s*(cost|integrat)", r"\bccm\b",
+    ]),
+    ("dbm", "Database Monitoring", [
+        r"\bdbm\b", r"\bdatabase\s*monitor", r"\bpostgres\b",
+        r"\bmysql\b", r"\bsql\s*server\b", r"\boracle\s*db\b",
     ]),
     ("logs", "Logs", [
         r"\blog\s*(management|collection|pipeline|parsing|archive|index)",
-        r"\bpipeline\b", r"\bparsing\s*rule", r"\blog\s*explorer",
+        r"\bpipeline\b", r"\bparsing\s*rule", r"\blog[\s-]*explorer",
     ]),
-    ("rum", "RUM", [
-        r"\brum\b", r"\breal\s*user\s*monitor", r"\bsession\s*replay",
-        r"\bbrowser\s*sdk\b",
+    ("metrics", "Metrics", [
+        r"\bmetric\s*(submission|ingestion|volume|cardinality)",
+        r"\bcustom[\s-]*metric", r"\bdistribution[\s-]*metric",
+        r"\bmetric[\s-]*explorer\b",
     ]),
-    ("synthetics", "Synthetics", [
-        r"\bsynthetic", r"\bapi\s*test", r"\bbrowser\s*test",
-        r"\bcontinuous\s*testing",
-    ]),
-    ("security", "Security", [
-        r"\bsecurity\b", r"\bappsec\b", r"\bsiem\b", r"\bcspm\b",
-        r"\bcws\b", r"\bvulnerability\s*manage",
+    ("monitors", "Monitors", [
+        r"\bmonitor\s*(alert|notify|evaluat|downtime|mute)",
+        r"\balert\s*(condition|threshold|notification)",
+        r"\bdowntime\b", r"\bslo\b",
     ]),
     ("network", "Network", [
         r"\bnetwork\s*(performance|device|monitor)", r"\bnpm\b",
         r"\bnetflow\b", r"\bdns\s*monitor",
     ]),
+    ("otel", "OpenTelemetry", [
+        r"\botel\b", r"\bopentelemetry\b", r"\botlp\b",
+        r"\botel[\s-]*collector\b",
+    ]),
+    ("profiling", "Profiling", [
+        r"\bprofil(e|er|ing)\b", r"\bcontinuous[\s-]*profil",
+        r"\bflame[\s-]*graph\b",
+    ]),
+    ("rum", "RUM", [
+        r"\brum\b", r"\breal[\s-]*user[\s-]*monitor", r"\bsession[\s-]*replay",
+        r"\bbrowser[\s-]*sdk\b",
+    ]),
+    ("security", "Security", [
+        r"\bsecurity\b", r"\bappsec\b", r"\bsiem\b", r"\bcspm\b",
+        r"\bcws\b", r"\bvulnerability\s*manage", r"\bcloud[\s-]*security\b",
+    ]),
+    ("serverless", "Serverless", [
+        r"\bserverless\b", r"\blambda\b", r"\bazure[\s-]*function",
+        r"\bcloud[\s-]*function", r"\bstep[\s-]*function",
+    ]),
+    ("service_mgmt", "Service Management", [
+        r"\bincident\s*(app|manage)", r"\bworkflow\s*automation",
+        r"\bcase[\s-]*management\b", r"\bevent[\s-]*management",
+        r"\bapp[\s-]*builder\b",
+    ]),
+    ("synthetics", "Synthetics", [
+        r"\bsynthetic", r"\bapi[\s-]*test", r"\bbrowser[\s-]*test",
+        r"\bcontinuous[\s-]*testing",
+    ]),
     ("platform", "Platform", [
-        r"\bbilling\b", r"\bsso\b", r"\bsaml\b", r"\bapi\s*key",
+        r"\bbilling\b", r"\bsso\b", r"\bsaml\b", r"\bapi[\s-]*key",
         r"\bdashboard\s*(widget|template|api)",
-        r"\brbac\b", r"\baudit\s*trail",
+        r"\brbac\b", r"\baudit[\s-]*trail", r"\bgraphing\b",
     ]),
     ("other", "Other", []),
 ]
@@ -287,6 +329,26 @@ _COMPILED_AREA_RULES = [
 ]
 
 PRODUCT_AREA_LABELS = {key: label for key, label, _pats in PRODUCT_AREA_RULES}
+
+TEE_BOARDS = {
+    "agent":        {"project": "AGENT",   "url": "https://datadoghq.atlassian.net/jira/software/c/projects/AGENT/boards/469",  "team": "Agent",              "email": "tee-agent-core@datadoghq.com"},
+    "apm":          {"project": "SRTEE",   "url": "https://datadoghq.atlassian.net/jira/software/c/projects/SRTEE/boards/5545", "team": "APM",                "email": "tee-apm@datadoghq.com"},
+    "containers":   {"project": "CONS",    "url": "https://datadoghq.atlassian.net/browse/CONS",                                "team": "Containers",         "email": "tee-containers@datadoghq.com"},
+    "cloud":        {"project": "CLOUDS",  "url": "https://datadoghq.atlassian.net/browse/CLOUDS",                              "team": "Cloud / CCM",        "email": "tee-cloud-integrations@datadoghq.com"},
+    "dbm":          {"project": "DBM",     "url": "https://datadoghq.atlassian.net/browse/DBM",                                 "team": "Database Monitoring", "email": "tee-dbm@datadoghq.com"},
+    "logs":         {"project": "LOGSS",   "url": "https://datadoghq.atlassian.net/browse/LOGSS",                               "team": "Logs",               "email": "tee-logs@datadoghq.com"},
+    "metrics":      {"project": "METS",    "url": "https://datadoghq.atlassian.net/browse/METS",                                "team": "Metrics",            "email": "tee-metrics@datadoghq.com"},
+    "monitors":     {"project": "MNTS",    "url": "https://datadoghq.atlassian.net/browse/MNTS",                                "team": "Monitors",           "email": "tee-monitors@datadoghq.com"},
+    "network":      {"project": "NETS",    "url": "https://datadoghq.atlassian.net/browse/NETS",                                "team": "Network",            "email": ""},
+    "otel":         {"project": "OTELS",   "url": "https://datadoghq.atlassian.net/jira/software/c/projects/OTELS/boards/2935", "team": "OpenTelemetry",      "email": "tee-otel@datadoghq.com"},
+    "profiling":    {"project": "SCP",     "url": "https://datadoghq.atlassian.net/browse/SCP",                                 "team": "Profiling",          "email": "tee-profiling@datadoghq.com"},
+    "rum":          {"project": "RUMS",    "url": "https://datadoghq.atlassian.net/jira/software/c/projects/RUMS/boards/731",   "team": "RUM",                "email": "tee-rum@datadoghq.com"},
+    "security":     {"project": "SCRS",    "url": "https://datadoghq.atlassian.net/browse/SCRS",                                "team": "Security",           "email": "tee-security@datadoghq.com"},
+    "serverless":   {"project": "SLES",    "url": "https://datadoghq.atlassian.net/browse/SLES",                                "team": "Serverless",         "email": "tee-serverless@datadoghq.com"},
+    "service_mgmt": {"project": "SOCE",    "url": "https://datadoghq.atlassian.net/browse/SOCE",                                "team": "Service Management", "email": ""},
+    "synthetics":   {"project": "SYN",     "url": "https://datadoghq.atlassian.net/browse/SYN",                                 "team": "Synthetics",         "email": "tee-synthetics@datadoghq.com"},
+    "platform":     {"project": "WEBPS",   "url": "https://datadoghq.atlassian.net/jira/software/c/projects/WEBPS/boards/473",  "team": "Web Platform",       "email": "tee-web-platform@datadoghq.com"},
+}
 
 
 def detect_product_area(text: str) -> str:
@@ -866,25 +928,6 @@ def _build_escalation_context(case_dir: Path, key: str) -> dict:
     if evidence:
         desc_parts.append(f"\n--- Relevant Evidence ---\n{evidence[:1500]}")
 
-    if support_admin_links:
-        desc_parts.append("\n--- Support Admin Links ---")
-        for link in support_admin_links:
-            desc_parts.append(f"- {link['label']}: {link['url']}")
-
-    if investigation_links or other_links:
-        desc_parts.append("\n--- Relevant Links ---")
-        for link in investigation_links:
-            desc_parts.append(f"- {link['label']}: {link['url']}")
-        for url in other_links:
-            desc_parts.append(f"- {url}")
-
-    all_assets = screenshots + files
-    if all_assets:
-        desc_parts.append("\n--- Attachments ---")
-        for a in all_assets:
-            desc_parts.append(f"- {a['name']} ({a['size']})")
-        desc_parts.append("(Attach these files to the JIRA ticket from the case assets folder)")
-
     if not any([issue_summary, what_tried, ruled_out]):
         desc_parts.append(
             "\n--- Investigation Summary ---\n"
@@ -897,11 +940,14 @@ def _build_escalation_context(case_dir: Path, key: str) -> dict:
     if priority not in ("Critical", "High", "Medium", "Low"):
         priority = "Medium"
 
+    board = TEE_BOARDS.get(product_area)
+
     return {
         "summary": summary[:255],
         "description": description,
         "priority": priority,
         "product_area": area_label,
+        "tee_board": board,
         "labels": ["tse-escalation", f"area-{product_area}"] if product_area != "other" else ["tse-escalation"],
         "support_admin_links": support_admin_links,
         "investigation_links": investigation_links,
