@@ -967,6 +967,140 @@ def escalation_context(key):
     return jsonify(ctx)
 
 
+# ── Feature Request Context ──────────────────────────────────────────────────
+
+def _build_feature_request_context(case_dir: Path, key: str) -> dict:
+    """Extract structured context from case files to pre-populate a feature request."""
+    readme_path = case_dir / "README.md"
+    notes_path = case_dir / "notes.md"
+    fr_path = case_dir / "feature-request.md"
+    meta = _read_meta(case_dir)
+
+    readme_raw = readme_path.read_text(encoding="utf-8") if readme_path.exists() else ""
+    notes_raw = notes_path.read_text(encoding="utf-8") if notes_path.exists() else ""
+    fr_raw = fr_path.read_text(encoding="utf-8") if fr_path.exists() else ""
+    combined = readme_raw + "\n" + notes_raw
+
+    def _extract_section(text: str, heading: str) -> str:
+        pattern = rf"(?:^|\n)#{{1,4}}\s*{re.escape(heading)}\s*\n([\s\S]*?)(?=\n#{{1,4}}\s|\Z)"
+        m = re.search(pattern, text, re.IGNORECASE)
+        return m.group(1).strip() if m else ""
+
+    # Prefer explicit product area from feature-request.md over regex detection
+    area_label = ""
+    if fr_raw:
+        area_m = re.search(r"\*\*Product Area:\*\*\s*(.+)", fr_raw)
+        if area_m:
+            area_label = area_m.group(1).strip()
+    if not area_label:
+        product_area = detect_product_area(combined)
+        area_label = PRODUCT_AREA_LABELS.get(product_area, "")
+
+    # If the skill already produced feature-request.md, prefer its structured content
+    fr_title = ""
+    fr_pain_point = ""
+    fr_user_story = ""
+    fr_context = ""
+
+    if fr_raw:
+        title_m = re.search(r"^#{1,4}\s*Feature Request:\s*(.+)", fr_raw, re.MULTILINE)
+        if title_m:
+            fr_title = title_m.group(1).strip()
+        fr_pain_point = _extract_section(fr_raw, "Pain Point")
+        fr_user_story = _extract_section(fr_raw, "User Story")
+        fr_context = _extract_section(fr_raw, "Supporting Context")
+
+    # Fall back to case file sections when feature-request.md doesn't exist
+    if not fr_pain_point:
+        issue_summary = (
+            _extract_section(readme_raw, "Issue Summary")
+            or _extract_section(readme_raw, "What's Happening")
+            or _extract_section(notes_raw, "What We Know")
+        )
+        fr_pain_point = issue_summary
+
+    if not fr_user_story:
+        comms = _extract_section(notes_raw, "Customer Communications")
+        what_tried = _extract_section(notes_raw, "What We've Tried") or _extract_section(notes_raw, "Actions Taken")
+        parts = []
+        if comms:
+            parts.append(comms[:800])
+        if what_tried:
+            parts.append(what_tried[:800])
+        fr_user_story = "\n\n".join(parts) if parts else ""
+
+    if not fr_context:
+        evidence = _extract_section(notes_raw, "Evidence") or _extract_section(notes_raw, "Findings")
+        internal = _extract_section(notes_raw, "Internal Notes") or _extract_section(notes_raw, "Investigation Log")
+        parts = []
+        if evidence:
+            parts.append(evidence[:600])
+        if internal:
+            parts.append(internal[:600])
+        fr_context = "\n\n".join(parts) if parts else ""
+
+    title_match = re.match(r"^#\s+(.+)", readme_raw or notes_raw, re.MULTILINE)
+    case_title = title_match.group(1).strip() if title_match else key
+
+    if not fr_title:
+        prefix = f"{area_label} - " if area_label and area_label != "Other" else ""
+        fr_title = f"{prefix}{case_title}"
+        if fr_title.startswith("Case: "):
+            fr_title = fr_title.replace("Case: ", "", 1)
+
+    # Collect links (reuse same logic as escalation)
+    inv_links_section = _extract_section(readme_raw, "Investigation Links") or _extract_section(notes_raw, "Investigation Links")
+    links: list[dict] = []
+    seen_urls: set[str] = set()
+
+    if inv_links_section:
+        md_link_re = re.compile(r"\[([^\]]+)\]\((https?://[^\)]+)\)")
+        for m in md_link_re.finditer(inv_links_section):
+            label, url = m.group(1).strip(), m.group(2).strip()
+            if url not in seen_urls:
+                seen_urls.add(url)
+                links.append({"label": label, "url": url})
+
+    ref_section = _extract_section(fr_raw, "References") or _extract_section(notes_raw, "References")
+    if ref_section:
+        md_link_re = re.compile(r"\[([^\]]+)\]\((https?://[^\)]+)\)")
+        for m in md_link_re.finditer(ref_section):
+            label, url = m.group(1).strip(), m.group(2).strip()
+            if url not in seen_urls:
+                seen_urls.add(url)
+                links.append({"label": label, "url": url})
+
+    _url_re = re.compile(r"https?://[^\s\)\]>\"']+")
+    other_links: list[str] = []
+    for url_match in _url_re.finditer(combined):
+        url = url_match.group(0).rstrip(".,;:!?)")
+        if url not in seen_urls:
+            seen_urls.add(url)
+            other_links.append(url)
+
+    return {
+        "title": fr_title[:255],
+        "product_area": area_label,
+        "pain_point": fr_pain_point,
+        "user_story": fr_user_story,
+        "context": fr_context,
+        "links": links,
+        "other_links": other_links,
+        "zendesk_ticket": key,
+        "has_feature_request_file": bool(fr_raw),
+    }
+
+
+@app.route("/api/case/<key>/feature-request-context")
+def feature_request_context(key):
+    """Return pre-populated feature request data for the modal."""
+    case_dir = CASES_DIR / key
+    if not case_dir.exists():
+        abort(404)
+    ctx = _build_feature_request_context(case_dir, key)
+    return jsonify(ctx)
+
+
 @app.route("/known-issues")
 def known_issues():
     data = get_known_issues()

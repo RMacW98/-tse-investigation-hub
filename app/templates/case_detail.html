@@ -20,6 +20,10 @@
                     {% endif %}
                 </div>
                 <div class="flex items-center gap-2">
+                    <button onclick="openFeatureRequestModal()" class="btn-y2k py-0.5 px-3 text-[11px] inline-flex items-center gap-1" style="border-color: #2CC3A0; color: #1A8A6E;">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                        Feature Request
+                    </button>
                     <button onclick="openEscalationModal()" class="btn-y2k-blue py-0.5 px-3 text-[11px] inline-flex items-center gap-1">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
                         Prepare Escalation
@@ -481,6 +485,137 @@
     </div>
 </div>
 
+<!-- Feature Request Modal -->
+<div id="fr-modal" class="hidden" style="position: fixed; inset: 0; z-index: 100;">
+    <div style="position: absolute; inset: 0; background: rgba(26,26,46,0.5);" onclick="closeFeatureRequestModal()"></div>
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 700px; max-height: 88vh;" class="flex flex-col">
+        <div class="card overflow-hidden flex flex-col" style="max-height: 88vh;">
+            <!-- Title bar -->
+            <div class="win-titlebar flex items-center justify-between flex-shrink-0" style="background: linear-gradient(90deg, #1A8A6E 0%, #2CC3A0 100%);">
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                    Feature Request — {{ key }}
+                </div>
+                <button onclick="closeFeatureRequestModal()" style="color: #FFF; font-weight: 700; font-size: 14px; line-height: 1; cursor: pointer; padding: 0 4px;">&#x2715;</button>
+            </div>
+
+            <!-- Instructions banner -->
+            <div class="px-4 py-2 flex items-start gap-2" style="background: #EFFAF6; border-bottom: 1px solid #B8E8D8;">
+                <svg class="w-4 h-4 flex-shrink-0 mt-0.5" style="color: #1A8A6E;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <p class="text-[11px] text-dd-text-muted leading-relaxed">
+                    Copy each field below and paste into your JIRA feature request ticket. Fields are pre-filled from your case investigation — edit as needed.
+                </p>
+            </div>
+
+            <div class="overflow-y-auto flex-1" id="fr-content">
+                <div id="fr-loading" class="px-4 py-8 text-center text-[12px] text-dd-text-dim">
+                    Loading case context...
+                </div>
+
+                <div id="fr-fields" class="hidden p-4 space-y-3">
+                    <!-- Title -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="text-[11px] font-bold text-dd-text-dim uppercase tracking-wider">Title</label>
+                            <button onclick="copyFRField('fr-title')" class="copy-btn btn-y2k py-0 px-2 text-[10px] inline-flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                <span>Copy</span>
+                            </button>
+                        </div>
+                        <input type="text" id="fr-title" class="input-y2k w-full" placeholder="[Area] - Brief description of desired capability" maxlength="255">
+                    </div>
+
+                    <!-- Product Area + Zendesk Ticket row -->
+                    <div class="flex gap-3">
+                        <div class="flex-1">
+                            <label class="text-[11px] font-bold text-dd-text-dim uppercase tracking-wider block mb-1">Product Area</label>
+                            <input type="text" id="fr-area" class="input-y2k w-full" readonly style="background: #EFFAF6; color: #1A6E56;">
+                        </div>
+                        <div class="flex-1">
+                            <label class="text-[11px] font-bold text-dd-text-dim uppercase tracking-wider block mb-1">Zendesk Ticket</label>
+                            <input type="text" id="fr-ticket" class="input-y2k w-full" readonly style="background: #F5F0FA; color: #4A4560;">
+                        </div>
+                    </div>
+
+                    <!-- Pain Point -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="text-[11px] font-bold uppercase tracking-wider" style="color: #C04040;">Pain Point</label>
+                            <button onclick="copyFRField('fr-pain-point')" class="copy-btn btn-y2k py-0 px-2 text-[10px] inline-flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                <span>Copy</span>
+                            </button>
+                        </div>
+                        <textarea id="fr-pain-point" class="input-y2k w-full" rows="4" style="font-size: 12px; line-height: 1.5; resize: vertical;"
+                            placeholder="The core limitation the customer is experiencing..."></textarea>
+                        <p class="text-[10px] text-dd-text-dim mt-1">The crux of the customer's request — what they cannot currently do.</p>
+                    </div>
+
+                    <!-- User Story -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="text-[11px] font-bold uppercase tracking-wider" style="color: #1A6DD4;">User Story</label>
+                            <button onclick="copyFRField('fr-user-story')" class="copy-btn btn-y2k py-0 px-2 text-[10px] inline-flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                <span>Copy</span>
+                            </button>
+                        </div>
+                        <textarea id="fr-user-story" class="input-y2k w-full" rows="6" style="font-size: 12px; line-height: 1.5; resize: vertical;"
+                            placeholder="Concise narrative of what the user needs and why..."></textarea>
+                        <p class="text-[10px] text-dd-text-dim mt-1">Built from TSE investigation notes — describes what the user needs and why.</p>
+                    </div>
+
+                    <!-- Supporting Context -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="text-[11px] font-bold text-dd-text-dim uppercase tracking-wider">Supporting Context</label>
+                            <button onclick="copyFRField('fr-context')" class="copy-btn btn-y2k py-0 px-2 text-[10px] inline-flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                <span>Copy</span>
+                            </button>
+                        </div>
+                        <textarea id="fr-context" class="input-y2k w-full" rows="6" style="font-family: 'Lucida Console', 'Courier New', monospace; font-size: 11px; line-height: 1.5; resize: vertical;"
+                            placeholder="Investigation points, internal notes, current workarounds..."></textarea>
+                    </div>
+
+                    <!-- References -->
+                    <div id="fr-links-section" class="hidden">
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="text-[11px] font-bold text-dd-text-dim uppercase tracking-wider">
+                                <span class="inline-flex items-center gap-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                                    References (<span id="fr-links-count">0</span>)
+                                </span>
+                            </label>
+                            <button onclick="copyFRLinks()" class="copy-btn btn-y2k py-0 px-2 text-[10px] inline-flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                <span>Copy</span>
+                            </button>
+                        </div>
+                        <div id="fr-links-list" class="card overflow-hidden"></div>
+                    </div>
+
+                    <!-- Copy All -->
+                    <div class="pt-1">
+                        <button onclick="copyAllFR()" class="text-[11px] py-1.5 px-4 w-full inline-flex items-center justify-center gap-1.5 font-bold" style="background: #1A8A6E; color: #FFF; border: 2px outset #2CC3A0; border-radius: 2px; cursor: pointer;">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                            <span id="fr-copy-all-label">Copy Everything</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="flex items-center justify-between px-4 py-2.5 flex-shrink-0" style="background: #EFFAF6; border-top: 1px solid #B8E8D8;">
+                <div class="text-[10px] text-dd-text-dim">
+                    Copy and paste into JIRA manually. Nothing is created automatically.
+                </div>
+                <button onclick="closeFeatureRequestModal()" class="btn-y2k text-[11px] py-1 px-3">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     function showTab(tabName) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -723,7 +858,119 @@
     }
 
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeEscalationModal();
+        if (e.key === 'Escape') { closeEscalationModal(); closeFeatureRequestModal(); }
     });
+
+    // ── Feature Request Modal ────────────────────────────────────────────
+
+    let _frLinks = [];
+    let _frOtherLinks = [];
+
+    function openFeatureRequestModal() {
+        document.getElementById('fr-modal').classList.remove('hidden');
+        document.getElementById('fr-loading').classList.remove('hidden');
+        document.getElementById('fr-fields').classList.add('hidden');
+
+        fetch('/api/case/{{ key }}/feature-request-context')
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('fr-title').value = data.title || '';
+                document.getElementById('fr-area').value = data.product_area || '';
+                document.getElementById('fr-ticket').value = data.zendesk_ticket || '';
+                document.getElementById('fr-pain-point').value = data.pain_point || '';
+                document.getElementById('fr-user-story').value = data.user_story || '';
+                document.getElementById('fr-context').value = data.context || '';
+
+                _frLinks = data.links || [];
+                _frOtherLinks = data.other_links || [];
+                const allLinks = [..._frLinks, ..._frOtherLinks.map(u => ({label: '', url: u}))];
+                const linksSection = document.getElementById('fr-links-section');
+                const linksList = document.getElementById('fr-links-list');
+                document.getElementById('fr-links-count').textContent = allLinks.length;
+
+                if (allLinks.length > 0) {
+                    linksSection.classList.remove('hidden');
+                    linksList.innerHTML = allLinks.map(l => {
+                        const ci = _classifyIcon(l.url);
+                        const label = l.label || new URL(l.url).hostname;
+                        return `<div class="flex items-center gap-2 px-3 py-1.5" style="border-bottom: 1px solid #F0EBF5;">
+                            <svg class="w-3.5 h-3.5 flex-shrink-0" style="color: ${ci.color};" fill="none" stroke="currentColor" viewBox="0 0 24 24">${_linkIcon(ci.icon)}</svg>
+                            <a href="${l.url}" target="_blank" class="text-[11px] truncate" style="color: #1A6DD4; text-decoration: none; flex: 1;">${label}</a>
+                        </div>`;
+                    }).join('');
+                } else {
+                    linksSection.classList.add('hidden');
+                }
+
+                document.getElementById('fr-loading').classList.add('hidden');
+                document.getElementById('fr-fields').classList.remove('hidden');
+            })
+            .catch(err => {
+                document.getElementById('fr-loading').textContent = 'Failed to load context: ' + err.message;
+            });
+    }
+
+    function closeFeatureRequestModal() {
+        document.getElementById('fr-modal').classList.add('hidden');
+    }
+
+    function _flashFRCopy(elId) {
+        const el = document.getElementById(elId);
+        if (!el) return;
+        el.style.transition = 'outline-color 0.15s';
+        el.style.outline = '2px solid #2CC3A0';
+        setTimeout(() => { el.style.outline = 'none'; }, 800);
+    }
+
+    function copyFRField(id) {
+        const el = document.getElementById(id);
+        const val = el.value || el.textContent || '';
+        navigator.clipboard.writeText(val).then(() => _flashFRCopy(id));
+    }
+
+    function copyFRLinks() {
+        const parts = [];
+        _frLinks.forEach(l => parts.push(`${l.label}: ${l.url}`));
+        _frOtherLinks.forEach(u => parts.push(u));
+        navigator.clipboard.writeText(parts.join('\n')).then(() => _flashFRCopy('fr-links-section'));
+    }
+
+    function copyAllFR() {
+        const title = document.getElementById('fr-title').value;
+        const area = document.getElementById('fr-area').value;
+        const ticket = document.getElementById('fr-ticket').value;
+        const painPoint = document.getElementById('fr-pain-point').value;
+        const userStory = document.getElementById('fr-user-story').value;
+        const context = document.getElementById('fr-context').value;
+
+        let parts = [
+            `## Feature Request: ${title}`,
+            '',
+            `**Zendesk Ticket:** ${ticket}`,
+            `**Product Area:** ${area}`,
+            '',
+            '### Pain Point',
+            painPoint,
+            '',
+            '### User Story',
+            userStory,
+        ];
+
+        if (context) {
+            parts.push('', '### Supporting Context', context);
+        }
+
+        if (_frLinks.length || _frOtherLinks.length) {
+            parts.push('', '### References');
+            _frLinks.forEach(l => parts.push(`- [${l.label}](${l.url})`));
+            _frOtherLinks.forEach(u => parts.push(`- ${u}`));
+        }
+
+        navigator.clipboard.writeText(parts.join('\n')).then(() => {
+            const label = document.getElementById('fr-copy-all-label');
+            label.textContent = 'Copied to clipboard!';
+            setTimeout(() => { label.textContent = 'Copy Everything'; }, 2000);
+        });
+    }
 </script>
 {% endblock %}

@@ -180,6 +180,7 @@ These Cursor skills are installed in the workspace at `.cursor/skills/` and shou
 | `zendesk-ticket-pool` | "ticket pool" / "open tickets" | Shows assigned ticket queue with priorities and flags |
 | `zendesk-ticket-classifier` | "classify ticket #XYZ" | Categorizes ticket type, writes to `meta.json` |
 | `zendesk-attachment-downloader` | "download attachments from #XYZ" | Downloads flares/logs/screenshots to `cases/ZD-{id}/assets/` |
+| `zendesk-ticket-feature-request` | "feature request for #XYZ" | Reads case notes, extracts pain point and user story, writes `feature-request.md` |
 
 ### Skill-Workflow Mapping
 - **Step 1 (Fetch):** `investigator` handles this automatically via `zd-api.sh`
