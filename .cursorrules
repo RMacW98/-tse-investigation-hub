@@ -295,6 +295,49 @@ When you solve something novel:
 - Share in team channels
 - Help future TSEs (and yourself) solve it faster next time
 
+## Pre-Push Security Scan
+
+**Before every `git push` from this workspace, run a security scan.** This is mandatory — never skip it.
+
+### What to Check
+
+1. **Secrets & credentials** — Scan all staged/changed files for API keys, tokens, passwords, connection strings. Check `.env` patterns, hardcoded strings, URL query params with keys
+2. **Customer data / PII** — Ensure no customer logs, configs, email addresses, org IDs, or account-specific data is being committed outside of `cases/` (which is gitignored)
+3. **Path traversal** — If Flask routes were modified, verify user-controlled path segments are validated (resolved path stays within expected base directory)
+4. **XSS vectors** — If templates were modified, check that any new `|safe` usage has upstream sanitization, and any new `innerHTML` usage escapes interpolated values
+5. **Dependencies** — If `requirements.txt` or CDN script tags were changed, verify versions are pinned and SRI hashes are present for CDN resources
+6. **Debug/verbose modes** — Ensure no `debug=True`, verbose logging of sensitive data, or print statements with credentials are being committed
+
+### How to Report
+
+After scanning, output a brief summary:
+
+```
+Security scan: PASS ✓
+- No secrets or credentials found
+- No customer PII in committed files
+- [any other relevant notes]
+```
+
+Or if issues are found:
+
+```
+Security scan: FAIL ✗
+- [SEVERITY] Description of issue in file:line
+- [SEVERITY] Description of issue in file:line
+Blocking push until resolved.
+```
+
+**Do not push if any HIGH or CRITICAL issues are found.** Fix them first, then re-scan.
+
+### Known Issues (Tracked)
+
+These are pre-existing issues documented for future remediation — they do not block pushes:
+- Markdown `|safe` rendering without HTML sanitizer (tracked — add `bleach`/`nh3` to `render_md()`)
+- Escalation modal uses `innerHTML` without escaping (tracked — refactor to DOM APIs)
+- CDN scripts without SRI hashes (tracked — add integrity attributes)
+- Flask routes lack path traversal validation (tracked — add `resolve()` + `is_relative_to()` checks)
+
 ---
 
 **Remember:** You're helping customers keep their systems running. Be thorough, be cautious with production changes, and don't hesitate to escalate when needed.
