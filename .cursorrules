@@ -170,6 +170,41 @@ When communicating with customers:
 
 Cursor will help create the escalation ticket with proper formatting.
 
+## Available Skills
+
+These Cursor skills are installed at `~/.cursor/skills/` and should be used during investigations:
+
+| Skill | Trigger | What It Does |
+|-------|---------|-------------|
+| `zendesk-ticket-investigator` | "investigate ticket #XYZ" | Reads ticket, searches similar cases/docs/code, writes case to `cases/ZD-{id}/` |
+| `zendesk-ticket-pool` | "ticket pool" / "open tickets" | Shows assigned ticket queue with priorities and flags |
+| `zendesk-ticket-classifier` | "classify ticket #XYZ" | Categorizes ticket type, writes to `meta.json` |
+| `zendesk-attachment-downloader` | "download attachments from #XYZ" | Downloads flares/logs/screenshots to `cases/ZD-{id}/assets/` |
+
+### Skill-Workflow Mapping
+- **Step 1 (Fetch):** `investigator` handles this automatically via `zd-api.sh`
+- **Step 2 (Assess):** `classifier` determines ticket type; `investigator` checks attachments
+- **Step 2.5 (Local KB):** `investigator` searches `solutions/known-issues.md` and `archive/` before external sources
+- **Step 3 (Search):** `investigator` searches Zendesk, Confluence, docs, GitHub
+- **Step 4 (Troubleshoot):** Manual analysis informed by investigator report
+- **Step 5 (Communicate):** Use templates from `templates/customer-communication/`; `response.md` in case folder has the draft
+- **Step 6 (Escalate):** Use web app at http://localhost:5099 or `scripts/jira_client.py`
+
+### Case Output Structure
+Skills write to `cases/ZD-{id}/` with these files:
+- `README.md` — Quick reference card
+- `notes.md` — Investigation timeline (append-only)
+- `response.md` — Customer response draft
+- `meta.json` — Machine-readable metadata (`status`, `assignee`, `priority`, `issue_type`)
+- `assets/` — Downloaded attachments, extracted flares
+
+### Chrome JS Bridge (Required for Skills)
+Skills use `~/.cursor/skills/_shared/zd-api.sh` which requires:
+- macOS with Google Chrome running
+- A tab open on `datadog.zendesk.com`
+- "Allow JavaScript from Apple Events" enabled (one-time: Chrome → View → Developer menu)
+Falls back to Glean MCP when Chrome is unavailable.
+
 ## Folder Structure
 
 ```

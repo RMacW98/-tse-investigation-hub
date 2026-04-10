@@ -171,6 +171,65 @@ def format_issue_markdown(issue: dict) -> str:
 """
     return md
 
+def create_issue(summary: str, description: str, priority: str = "Medium",
+                  issue_type: str = "Task", labels: list | None = None,
+                  extra_fields: dict | None = None) -> dict:
+    """Create a JIRA issue and return the API response (contains 'key', 'id', 'self')."""
+    if not PROJECT:
+        raise ValueError("JIRA_PROJECT_KEY not set in .env")
+
+    priority_map = {
+        "Critical": "1", "Highest": "1",
+        "High": "2",
+        "Medium": "3",
+        "Low": "4",
+        "Lowest": "5",
+    }
+    priority_id = priority_map.get(priority, "3")
+
+    payload = {
+        "fields": {
+            "project": {"key": PROJECT},
+            "summary": summary,
+            "issuetype": {"name": issue_type},
+            "priority": {"id": priority_id},
+            "description": {
+                "version": 1,
+                "type": "doc",
+                "content": [
+                    {
+                        "type": "paragraph",
+                        "content": [{"type": "text", "text": line}]
+                    }
+                    for line in description.split("\n") if line.strip()
+                ],
+            },
+        }
+    }
+
+    if labels:
+        payload["fields"]["labels"] = labels
+    if extra_fields:
+        payload["fields"].update(extra_fields)
+
+    url = f"https://{DOMAIN}/rest/api/3/issue"
+    credentials = base64.b64encode(f"{EMAIL}:{TOKEN}".encode()).decode()
+    body = json.dumps(payload).encode("utf-8")
+
+    req = urllib.request.Request(url, data=body, method="POST", headers={
+        "Authorization": f"Basic {credentials}",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    })
+
+    try:
+        with urllib.request.urlopen(req, timeout=15) as response:
+            return json.loads(response.read().decode())
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode() if e.fp else ""
+        raise RuntimeError(f"JIRA create failed ({e.code}): {error_body}") from e
+
+
 def archive_issue(issue_key: str):
     """Fetch issue and save to archive folder, organized by MM-YYYY."""
     archive_dir = Path(__file__).parent.parent / "archive"

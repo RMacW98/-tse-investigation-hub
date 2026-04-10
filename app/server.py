@@ -111,6 +111,38 @@ def fetch_escalations(jira_keys: list[str]) -> list[dict]:
     return results
 
 
+_SA_URL_RE = re.compile(r"support-admin\.[^/]*\.prod\.dog", re.I)
+_MD_LINK_RE = re.compile(r"\[([^\]]+)\]\((https?://[^\)]+)\)")
+_LABELED_URL_RE = re.compile(r"-\s+\*\*([^*]+)\*\*:?\s+(https?://\S+)")
+_BARE_URL_RE = re.compile(r"https?://[^\s\)\]>\"']+")
+
+
+def _extract_support_admin_links(raw_text: str) -> list[dict]:
+    """Extract support-admin (Partlow) links with labels from markdown text."""
+    seen: set[str] = set()
+    links: list[dict] = []
+
+    for m in _MD_LINK_RE.finditer(raw_text):
+        label, url = m.group(1).strip(), m.group(2).strip()
+        if _SA_URL_RE.search(url) and url not in seen:
+            seen.add(url)
+            links.append({"label": label, "url": url})
+
+    for m in _LABELED_URL_RE.finditer(raw_text):
+        label, url = m.group(1).strip().rstrip(":"), m.group(2).strip().rstrip(".,;:!?)")
+        if _SA_URL_RE.search(url) and url not in seen:
+            seen.add(url)
+            links.append({"label": label, "url": url})
+
+    for m in _BARE_URL_RE.finditer(raw_text):
+        url = m.group(0).rstrip(".,;:!?)")
+        if _SA_URL_RE.search(url) and url not in seen:
+            seen.add(url)
+            links.append({"label": "Support Admin", "url": url})
+
+    return links
+
+
 # ── Flask App ────────────────────────────────────────────────────────────────
 
 app = Flask(
@@ -168,10 +200,31 @@ STATUS_COLORS = {
 }
 
 
+ISSUE_TYPE_LABELS = {
+    "billing-question": "Billing Question",
+    "billing-bug": "Billing Bug",
+    "technical-question": "Technical Question",
+    "technical-bug": "Technical Bug",
+    "configuration-troubleshooting": "Config Troubleshooting",
+    "feature-request": "Feature Request",
+    "incident": "Incident",
+}
+
+ISSUE_TYPE_COLORS = {
+    "billing-question": "sky",
+    "billing-bug": "rose",
+    "technical-question": "indigo",
+    "technical-bug": "red",
+    "configuration-troubleshooting": "amber",
+    "feature-request": "teal",
+    "incident": "fuchsia",
+}
+
+
 def _read_meta(case_dir: Path) -> dict:
     """Read meta.json from a case folder, returning defaults if missing."""
     meta_path = case_dir / "meta.json"
-    meta = {"status": "new", "assignee": "", "priority": ""}
+    meta = {"status": "new", "assignee": "", "priority": "", "issue_type": ""}
     if meta_path.exists():
         try:
             data = json.loads(meta_path.read_text())
@@ -181,6 +234,8 @@ def _read_meta(case_dir: Path) -> dict:
                 meta["assignee"] = str(data["assignee"]).strip()
             if data.get("priority"):
                 meta["priority"] = str(data["priority"]).strip()
+            if data.get("issue_type"):
+                meta["issue_type"] = str(data["issue_type"]).strip()
         except Exception:
             pass
     return meta
@@ -271,11 +326,18 @@ _SOURCE_TYPES = [
 ]
 
 
+def _extract_ticket_number(text: str) -> str | None:
+    """Pull the bare numeric ID from a ZD ref or Zendesk URL."""
+    m = re.search(r"(?:ZD-|/tickets/)(\d+)", text)
+    return m.group(1) if m else None
+
+
 def extract_sources(raw_text: str) -> list:
     """Extract data source references from markdown text."""
     sources = []
     for src_key, src_label, url_patterns, ref_patterns in _SOURCE_TYPES:
         refs_seen = set()
+        ticket_ids_seen: set[str] = set()
         refs = []
 
         for url_pat in url_patterns:
@@ -288,10 +350,23 @@ def extract_sources(raw_text: str) -> list:
                 if dedup_key not in refs_seen:
                     refs_seen.add(dedup_key)
                     refs.append({"url": url, "display": display})
+                    tid = _extract_ticket_number(url)
+                    if tid:
+                        ticket_ids_seen.add(tid)
 
         for ref_pat in ref_patterns:
             for match in ref_pat.finditer(raw_text):
                 ref_text = match.group(0)
+
+                if src_key == "jira":
+                    prefix = ref_text.split("-")[0]
+                    if prefix in _NON_JIRA_PREFIXES:
+                        continue
+
+                tid = _extract_ticket_number(ref_text)
+                if tid and tid in ticket_ids_seen:
+                    continue
+
                 already = False
                 for r in refs:
                     d = r.get("display") or ""
@@ -304,6 +379,8 @@ def extract_sources(raw_text: str) -> list:
                 dedup_key = (ref_text, ref_text)
                 if dedup_key not in refs_seen:
                     refs_seen.add(dedup_key)
+                    if tid:
+                        ticket_ids_seen.add(tid)
                     url = None
                     if src_key == "jira":
                         url = f"https://datadoghq.atlassian.net/browse/{ref_text}"
@@ -357,6 +434,7 @@ def get_cases() -> list:
             "title": title,
             "has_notes": notes_path.exists(),
             "has_readme": readme_path.exists(),
+            "has_response": (d / "response.md").exists(),
             "files": [f.name for f in md_files],
             "file_count": len(md_files),
             "last_modified": last_modified,
@@ -364,6 +442,7 @@ def get_cases() -> list:
             "assignee": meta["assignee"],
             "priority": meta["priority"],
             "product_area": product_area,
+            "issue_type": meta["issue_type"],
         })
 
     cases.sort(key=lambda x: x["last_modified"] or datetime.min, reverse=True)
@@ -580,6 +659,8 @@ def cases_list():
         status_colors=STATUS_COLORS,
         product_areas=product_areas,
         area_labels=PRODUCT_AREA_LABELS,
+        issue_type_labels=ISSUE_TYPE_LABELS,
+        issue_type_colors=ISSUE_TYPE_COLORS,
     )
 
 
@@ -597,7 +678,8 @@ def case_detail(key):
 
     readme = md_files.get("README.md")
     notes = md_files.get("notes.md")
-    other_files = {k: v for k, v in md_files.items() if k not in ("README.md", "notes.md")}
+    response = md_files.get("response.md")
+    other_files = {k: v for k, v in md_files.items() if k not in ("README.md", "notes.md", "response.md")}
 
     assets_dir = case_dir / "assets"
     assets = []
@@ -627,11 +709,14 @@ def case_detail(key):
     jira_keys = extract_jira_keys(all_raw)
     escalations = fetch_escalations(jira_keys) if jira_keys else []
 
+    support_admin_links = _extract_support_admin_links(all_raw)
+
     return render_template(
         "case_detail.html",
         key=key,
         readme=readme,
         notes=notes,
+        response=response,
         other_files=other_files,
         assets=assets,
         prev_key=prev_key,
@@ -640,9 +725,12 @@ def case_detail(key):
         valid_statuses=VALID_STATUSES,
         status_labels=STATUS_LABELS,
         status_colors=STATUS_COLORS,
+        issue_type_labels=ISSUE_TYPE_LABELS,
+        issue_type_colors=ISSUE_TYPE_COLORS,
         sources=sources,
         sources_count=sum(len(s["refs"]) for s in sources),
         escalations=escalations,
+        support_admin_links=support_admin_links,
     )
 
 
@@ -653,6 +741,184 @@ def case_asset(key, filename):
     if not assets_dir.exists():
         abort(404)
     return send_from_directory(assets_dir, filename)
+
+
+def _build_escalation_context(case_dir: Path, key: str) -> dict:
+    """Extract structured context from case files to pre-populate an escalation."""
+    readme_path = case_dir / "README.md"
+    notes_path = case_dir / "notes.md"
+    meta = _read_meta(case_dir)
+
+    readme_raw = readme_path.read_text(encoding="utf-8") if readme_path.exists() else ""
+    notes_raw = notes_path.read_text(encoding="utf-8") if notes_path.exists() else ""
+    combined = readme_raw + "\n" + notes_raw
+
+    product_area = detect_product_area(combined)
+    area_label = PRODUCT_AREA_LABELS.get(product_area, "")
+
+    title_match = re.match(r"^#\s+(.+)", readme_raw or notes_raw, re.MULTILINE)
+    case_title = title_match.group(1).strip() if title_match else key
+
+    def _extract_section(text: str, heading: str) -> str:
+        pattern = rf"(?:^|\n)##?\s*{re.escape(heading)}\s*\n([\s\S]*?)(?=\n##?\s|\Z)"
+        m = re.search(pattern, text, re.IGNORECASE)
+        return m.group(1).strip() if m else ""
+
+    environment = _extract_section(readme_raw, "Environment") or _extract_section(notes_raw, "Environment")
+    issue_summary = _extract_section(readme_raw, "Issue Summary") or _extract_section(readme_raw, "What's Happening")
+    what_tried = _extract_section(notes_raw, "What We've Tried") or _extract_section(notes_raw, "Actions Taken")
+    ruled_out = _extract_section(notes_raw, "What We've Ruled Out") or _extract_section(notes_raw, "Root Cause Analysis")
+    evidence = _extract_section(notes_raw, "Evidence") or _extract_section(notes_raw, "Logs")
+    root_cause = _extract_section(notes_raw, "Likely Root Cause") or _extract_section(notes_raw, "Root Cause Analysis")
+
+    summary = f"{area_label + ' - ' if area_label and area_label != 'Other' else ''}{case_title}"
+    if summary.startswith("Case: "):
+        summary = summary.replace("Case: ", "", 1)
+
+    # -- Collect all links from case files --
+    # 1) Parse the curated "Investigation Links" section (labeled markdown links)
+    inv_links_section = _extract_section(readme_raw, "Investigation Links") or _extract_section(notes_raw, "Investigation Links")
+    _all_labeled: list[dict] = []
+    seen_urls: set[str] = set()
+
+    if inv_links_section:
+        md_link_re = re.compile(r"\[([^\]]+)\]\((https?://[^\)]+)\)")
+        for m in md_link_re.finditer(inv_links_section):
+            label, url = m.group(1).strip(), m.group(2).strip()
+            if url not in seen_urls:
+                seen_urls.add(url)
+                _all_labeled.append({"label": label, "url": url})
+
+        labeled_url_re = re.compile(r"-\s+\*\*([^*]+)\*\*:?\s+(https?://\S+)")
+        for m in labeled_url_re.finditer(inv_links_section):
+            label, url = m.group(1).strip().rstrip(":"), m.group(2).strip().rstrip(".,;:!?)")
+            if url not in seen_urls:
+                seen_urls.add(url)
+                _all_labeled.append({"label": label, "url": url})
+
+    # 2) Collect remaining URLs from the full case text
+    _url_re = re.compile(r"https?://[^\s\)\]>\"']+")
+    _all_unlabeled: list[str] = []
+    for url_match in _url_re.finditer(combined):
+        url = url_match.group(0).rstrip(".,;:!?)")
+        if url not in seen_urls:
+            seen_urls.add(url)
+            _all_unlabeled.append(url)
+
+    # 3) Split into: support-admin links (Partlow), investigation links, other links
+    _sa_re = re.compile(r"support-admin\.[^/]*\.prod\.dog", re.I)
+
+    support_admin_links = []
+    investigation_links = []
+    other_links = []
+
+    for link in _all_labeled:
+        if _sa_re.search(link["url"]):
+            support_admin_links.append(link)
+        else:
+            investigation_links.append(link)
+
+    for url in _all_unlabeled:
+        if _sa_re.search(url):
+            support_admin_links.append({"label": "Support Admin", "url": url})
+        else:
+            other_links.append(url)
+
+    # -- Collect assets (screenshots + files) --
+    image_exts = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
+    screenshots = []
+    files = []
+    assets_dir = case_dir / "assets"
+    if assets_dir.exists():
+        for f in sorted(assets_dir.rglob("*")):
+            if f.is_file() and not f.name.startswith("."):
+                size = f.stat().st_size
+                if size > 1048576:
+                    size_str = f"{size / 1048576:.1f} MB"
+                elif size > 1024:
+                    size_str = f"{size / 1024:.1f} KB"
+                else:
+                    size_str = f"{size} B"
+                entry = {
+                    "name": f.name,
+                    "path": str(f.relative_to(case_dir)),
+                    "url": f"/case/{key}/assets/{f.name}",
+                    "size": size_str,
+                }
+                if f.suffix.lower() in image_exts:
+                    screenshots.append(entry)
+                else:
+                    files.append(entry)
+
+    # -- Build description --
+    desc_parts = []
+    desc_parts.append(f"Zendesk Ticket: {key}")
+    if issue_summary:
+        desc_parts.append(f"\n--- Issue Description ---\n{issue_summary}")
+    if environment:
+        desc_parts.append(f"\n--- Environment ---\n{environment}")
+    if what_tried:
+        desc_parts.append(f"\n--- What We've Tried ---\n{what_tried}")
+    if ruled_out:
+        desc_parts.append(f"\n--- What We've Ruled Out ---\n{ruled_out}")
+    if root_cause:
+        desc_parts.append(f"\n--- Suspected Root Cause ---\n{root_cause}")
+    if evidence:
+        desc_parts.append(f"\n--- Relevant Evidence ---\n{evidence[:1500]}")
+
+    if support_admin_links:
+        desc_parts.append("\n--- Support Admin Links ---")
+        for link in support_admin_links:
+            desc_parts.append(f"- {link['label']}: {link['url']}")
+
+    if investigation_links or other_links:
+        desc_parts.append("\n--- Relevant Links ---")
+        for link in investigation_links:
+            desc_parts.append(f"- {link['label']}: {link['url']}")
+        for url in other_links:
+            desc_parts.append(f"- {url}")
+
+    all_assets = screenshots + files
+    if all_assets:
+        desc_parts.append("\n--- Attachments ---")
+        for a in all_assets:
+            desc_parts.append(f"- {a['name']} ({a['size']})")
+        desc_parts.append("(Attach these files to the JIRA ticket from the case assets folder)")
+
+    if not any([issue_summary, what_tried, ruled_out]):
+        desc_parts.append(
+            "\n--- Investigation Summary ---\n"
+            "[Describe the issue, what you've tried, and why this needs escalation]"
+        )
+
+    description = "\n".join(desc_parts)
+
+    priority = meta.get("priority", "").capitalize() or "Medium"
+    if priority not in ("Critical", "High", "Medium", "Low"):
+        priority = "Medium"
+
+    return {
+        "summary": summary[:255],
+        "description": description,
+        "priority": priority,
+        "product_area": area_label,
+        "labels": ["tse-escalation", f"area-{product_area}"] if product_area != "other" else ["tse-escalation"],
+        "support_admin_links": support_admin_links,
+        "investigation_links": investigation_links,
+        "other_links": other_links,
+        "screenshots": screenshots,
+        "files": files,
+    }
+
+
+@app.route("/api/case/<key>/escalation-context")
+def escalation_context(key):
+    """Return pre-populated escalation data for the modal."""
+    case_dir = CASES_DIR / key
+    if not case_dir.exists():
+        abort(404)
+    ctx = _build_escalation_context(case_dir, key)
+    return jsonify(ctx)
 
 
 @app.route("/known-issues")
