@@ -56,11 +56,13 @@ def make_request(endpoint: str) -> dict:
     })
     
     try:
-        with urllib.request.urlopen(req) as response:
+        with urllib.request.urlopen(req, timeout=10) as response:
             return json.loads(response.read().decode())
     except urllib.error.HTTPError as e:
-        print(f"HTTP Error {e.code}: {e.reason}")
-        sys.exit(1)
+        if __name__ == "__main__":
+            print(f"HTTP Error {e.code}: {e.reason}")
+            sys.exit(1)
+        raise
 
 def get_issue(issue_key: str) -> dict:
     """Fetch a single JIRA issue."""

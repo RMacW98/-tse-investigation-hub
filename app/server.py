@@ -3,7 +3,7 @@
 TSE Hub - Local web interface for TSE customer case investigations.
 
 Usage:
-    python server.py              # Start on http://localhost:5002
+    python server.py              # Start on http://localhost:5099
     python server.py --port 8080  # Custom port
 """
 
@@ -21,7 +21,7 @@ try:
 except ImportError:
     pass
 
-from flask import Flask, render_template, request, jsonify, abort, Response
+from flask import Flask, render_template, request, jsonify, abort, Response, send_from_directory
 
 import markdown
 from markdown.extensions.codehilite import CodeHiliteExtension
@@ -48,7 +48,7 @@ def _jira_fetch(key: str) -> dict | None:
     try:
         import jira_client as jc
         return jc.get_issue(key)
-    except Exception:
+    except BaseException:
         return None
 
 
@@ -90,9 +90,15 @@ def _extract_jira_activity(issue: dict, max_comments: int = 2) -> dict:
     }
 
 
+_NON_JIRA_PREFIXES = {"ZD", "HTTP", "SHA", "MD", "TLS", "SSL", "TCP", "UDP", "RFC"}
+
 def extract_jira_keys(text: str) -> list[str]:
     """Find all JIRA ticket references (e.g. APMS-1234, LOGS-567) in text."""
-    return sorted(set(re.findall(r"\b[A-Z][A-Z0-9]+-\d+\b", text)))
+    candidates = re.findall(r"\b([A-Z][A-Z0-9]+)-(\d+)\b", text)
+    return sorted(set(
+        f"{prefix}-{num}" for prefix, num in candidates
+        if prefix not in _NON_JIRA_PREFIXES
+    ))
 
 
 def fetch_escalations(jira_keys: list[str]) -> list[dict]:
@@ -640,6 +646,15 @@ def case_detail(key):
     )
 
 
+@app.route("/case/<key>/assets/<path:filename>")
+def case_asset(key, filename):
+    """Serve a file from a case's assets folder."""
+    assets_dir = CASES_DIR / key / "assets"
+    if not assets_dir.exists():
+        abort(404)
+    return send_from_directory(assets_dir, filename)
+
+
 @app.route("/known-issues")
 def known_issues():
     data = get_known_issues()
@@ -752,7 +767,7 @@ def not_found(e):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="TSE Hub local web server")
-    parser.add_argument("--port", type=int, default=5002, help="Port (default: 5002)")
+    parser.add_argument("--port", type=int, default=5099, help="Port (default: 5099)")
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
     args = parser.parse_args()
 

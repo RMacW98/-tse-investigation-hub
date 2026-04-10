@@ -189,18 +189,46 @@
 
         {% if assets %}
         <div id="tab-assets" class="tab-content hidden">
+            {% set images = [] %}
+            {% set other_assets = [] %}
+            {% for asset in assets %}
+                {% if asset.is_image %}{% if images.append(asset) %}{% endif %}
+                {% else %}{% if other_assets.append(asset) %}{% endif %}{% endif %}
+            {% endfor %}
+
+            {% if images %}
+            <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                {% for img in images %}
+                <div class="card overflow-hidden">
+                    <a href="/case/{{ key }}/assets/{{ img.name }}" target="_blank">
+                        <img src="/case/{{ key }}/assets/{{ img.name }}" alt="{{ img.name }}"
+                             style="width: 100%; display: block; border-bottom: 1px solid #D8CCE8;">
+                    </a>
+                    <div class="px-3 py-2 flex items-center justify-between" style="background: #F0EBF5;">
+                        <span class="text-[11px] font-mono" style="color: #632CA6;">{{ img.name }}</span>
+                        <span class="text-[10px] text-dd-text-dim">
+                            {% if img.size > 1048576 %}{{ "%.1f"|format(img.size / 1048576) }} MB{% elif img.size > 1024 %}{{ "%.1f"|format(img.size / 1024) }} KB{% else %}{{ img.size }} B{% endif %}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if other_assets %}
             <div class="card overflow-hidden mt-3">
-                <div class="win-titlebar">Assets ({{ assets|length }})</div>
-                {% for asset in assets %}
-                <div class="alt-row px-4 py-2 flex items-center gap-3" style="border-bottom: 1px solid #D8CCE8;">
+                <div class="win-titlebar">Files ({{ other_assets|length }})</div>
+                {% for asset in other_assets %}
+                <a href="/case/{{ key }}/assets/{{ asset.name }}" target="_blank" class="alt-row block px-4 py-2 flex items-center gap-3" style="border-bottom: 1px solid #D8CCE8; text-decoration: none; color: inherit;">
                     <svg class="w-4 h-4 flex-shrink-0 text-dd-text-dim" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                     <span class="text-[12px] font-mono" style="color: #1A1A2E;">{{ asset.name }}</span>
                     <span class="text-[11px] text-dd-text-dim ml-auto">
                         {% if asset.size > 1048576 %}{{ "%.1f"|format(asset.size / 1048576) }} MB{% elif asset.size > 1024 %}{{ "%.1f"|format(asset.size / 1024) }} KB{% else %}{{ asset.size }} B{% endif %}
                     </span>
-                </div>
+                </a>
                 {% endfor %}
             </div>
+            {% endif %}
         </div>
         {% endif %}
 
