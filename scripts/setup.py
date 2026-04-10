@@ -70,11 +70,13 @@ def write_mcp_json(github_token: str = "") -> Path:
 
     # Atlassian: SSO-based, no token needed
     config["mcpServers"]["atlassian"] = {
+        "type": "http",
         "url": ATLASSIAN_MCP_URL,
     }
 
     # Glean: SSO-based, no token needed
     config["mcpServers"]["glean_default"] = {
+        "type": "http",
         "url": GLEAN_MCP_URL,
     }
 
