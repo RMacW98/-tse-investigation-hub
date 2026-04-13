@@ -181,6 +181,7 @@ These Cursor skills are installed in the workspace at `.cursor/skills/` and shou
 | `zendesk-ticket-classifier` | "classify ticket #XYZ" | Categorizes ticket type, writes to `meta.json` |
 | `zendesk-attachment-downloader` | "download attachments from #XYZ" | Downloads flares/logs/screenshots to `cases/ZD-{id}/assets/` |
 | `zendesk-ticket-feature-request` | "feature request for #XYZ" | Reads case notes, extracts pain point and user story, writes `feature-request.md` |
+| `zendesk-ticket-cvat` | "log cvat" / "value add for" | Rewrites activity as value statement, appends to account README |
 
 ### Skill-Workflow Mapping
 - **Step 1 (Fetch):** `investigator` handles this automatically via `zd-api.sh`
@@ -212,6 +213,20 @@ Falls back to Glean MCP when Chrome is unavailable.
 tse-investigation-hub/
 ├── cases/              # Active customer cases (ZD-XXXXX folders)
 │   └── .template/      # Template for new cases
+├── accounts/           # Persistent customer account tracking
+│   ├── .template/      # Template for new accounts
+│   │   ├── README.md   # Account overview, contacts, links
+│   │   ├── notes.md    # Running notes log
+│   │   ├── tasks.md    # Small requests / action items
+│   │   ├── meta.json   # Machine-readable metadata
+│   │   └── qbrs/       # QBR subfolder
+│   └── <account-name>/ # One folder per account
+├── projects/           # One-off work items (presentations, etc.)
+│   ├── .template/      # Template for new projects
+│   │   ├── README.md   # Project overview
+│   │   ├── notes.md    # Working notes
+│   │   └── meta.json   # Type, status, dates
+│   └── <project-name>/ # One folder per project
 ├── archive/            # Archived cases by month (MM-YYYY/)
 ├── docs/               # Product documentation
 │   ├── apm/
@@ -226,8 +241,42 @@ tse-investigation-hub/
 ├── solutions/          # Known issues and workarounds
 ├── templates/          # Customer communication & escalation templates
 ├── reference/          # Reference materials
-└── scripts/            # Utility scripts (zendesk_client.py, jira_client.py)
+└── scripts/            # Utility scripts (zendesk_client.py, jira_client.py, sheets_import.py)
 ```
+
+## Accounts & Projects
+
+### Accounts
+Persistent customer relationship tracking. Each account lives at `accounts/<account-name>/`.
+
+**Create a new account:**
+```
+cp -r accounts/.template accounts/<account-name>
+```
+Then edit `README.md` and `meta.json` with account details.
+
+**Account `meta.json` fields:**
+- `account_name`, `org_id`, `tier`, `csm`, `next_qbr`, `status` (active/inactive/onboarding), `google_sheet_id`
+
+**QBRs:** Create monthly entries at `accounts/<name>/qbrs/YYYY-MM.md` using the QBR template.
+
+**Tasks:** Track small requests in `tasks.md`. Can be imported from Google Sheets:
+```
+python3 scripts/sheets_import.py <account-name>
+python3 scripts/sheets_import.py --all
+```
+
+### Projects
+Discrete work items with a start and end — presentations, documentation, tooling.
+
+**Create a new project:**
+```
+cp -r projects/.template projects/<project-name>
+```
+Then edit `README.md` and `meta.json` with project details.
+
+**Project `meta.json` fields:**
+- `type` (presentation/documentation/tooling/other), `status` (planned/in-progress/completed/cancelled), `due_date`, `audience`
 
 ## Product Areas & TEE Boards
 

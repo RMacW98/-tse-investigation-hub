@@ -6,8 +6,20 @@
 cases/*
 !cases/.template/
 
+# Account folders (may contain customer data in notes)
+accounts/*
+!accounts/.template/
+
+# Project folders (generally safe but keep template tracked)
+projects/*
+!projects/.template/
+
 # Archive (may contain customer data)
 archive/*
+
+# Next.js
+web/.next/
+web/node_modules/
 
 # Python
 __pycache__/

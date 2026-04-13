@@ -27,6 +27,32 @@ If Chrome is unavailable (ERROR output):
 Extract: customer name, org, priority, full problem description, any error messages or logs shared.
 Identify the **product area** (agent, logs, APM, infra, NDM, DBM, containers, etc.) for later searches.
 
+## Step 1.5: Read Slack threads linked in the ticket
+
+Scan the ticket content (description and all comments) for any `dd.slack.com` or `slack.com` URLs. These often contain critical context from internal discussions.
+
+Slack URLs follow this format:
+```
+https://dd.slack.com/archives/CHANNEL_ID/pTIMESTAMP
+```
+- `CHANNEL_ID` — the part after `/archives/` (e.g. `C01ABCDEF`)
+- `TIMESTAMP` — the part after `/p`, with a `.` inserted before the last 6 digits (e.g. `p1712345678901234` → `1712345678.901234`)
+
+For **each** Slack link found:
+1. Parse the URL to extract `channel_id` and `message_ts`
+2. Read the thread directly via the Slack MCP:
+   - Tool: `user-slack` — `slack_read_thread`
+   - `channel_id`: extracted from URL
+   - `message_ts`: extracted from URL (converted to dot format)
+3. Read the full thread and extract any relevant details (error messages, internal discussion conclusions, reproduction notes, workarounds mentioned)
+4. Include findings in the investigation report under **"Slack Thread Context"** in the timeline entry
+
+If the `slack_read_thread` call fails (e.g. channel not found, permissions), fall back to Glean search:
+- Tool: `user-glean_default` — `search`
+- query: the full Slack URL or keywords from surrounding context + `app:slack`
+
+If no Slack links are found in the ticket, skip this step.
+
 ## Step 2: Download and analyze attachments
 
 Use the `zendesk-attachment-downloader` skill to list and download attachments from the ticket.
@@ -317,6 +343,9 @@ Map the Zendesk priority tag to one of: `low`, `normal`, `high`, `urgent`. If no
 - Hostname:
 - Agent version:
 - Key findings from status.log
+
+**Slack Thread Context** _(if applicable)_
+- [Thread link](slack_url) — Summary of internal discussion and any conclusions or workarounds mentioned
 
 **Similar Past Tickets**
 | Ticket | Subject | Resolution |
