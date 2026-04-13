@@ -92,37 +92,3 @@ Each project folder contains:
 
 Project types: `presentation`, `documentation`, `tooling`, `other`
 
-## Reconfiguring
-
-Need to add GitHub or update config? Tell Cursor *"reconfigure my workspace"* or run:
-```bash
-python3 scripts/setup.py --reconfigure
-```
-
-## Local Web UI
-
-The hub includes a Next.js web app for browsing everything visually. Run:
-
-```bash
-./web/run.sh
-```
-
-This starts a local dashboard at **http://localhost:5099** with:
-
-- **Dashboard** -- overview of active cases, accounts, and projects
-- **Cases** -- browse active investigations with response drafts and escalation helpers
-- **Accounts** -- customer account tracking, QBR history, and CVAT logs
-- **Projects** -- track presentations, tooling, and other work items
-- **Known Issues** -- tracked product bugs and workarounds
-- **Docs** -- product troubleshooting documentation
-- **Templates** -- customer communication and escalation templates
-- **Archive** -- resolved cases by month
-- **Search** -- full-text search across all content
-
-The web UI is entirely optional -- the workspace works fully through Cursor alone. Built with Next.js 15, React 19, and Tailwind CSS v4.
-
-## Safety
-
-- All `cases/` and `archive/` folders are gitignored (customer data never committed)
-- Credentials stay local (gitignored)
-- Cursor confirms before sending public comments to customers
