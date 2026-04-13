@@ -92,3 +92,48 @@ Each project folder contains:
 
 Project types: `presentation`, `documentation`, `tooling`, `other`
 
+## Local Web UI (Next.js)
+
+The dashboard lives under `web/` and is a Next.js app (React 19, Tailwind CSS v4).
+
+**Run from the repository root** (recommended):
+
+```bash
+./web/run.sh
+```
+
+On first run this runs `npm install` in `web/` if `node_modules` is missing, then starts the dev server at **http://localhost:5099**.
+
+**Run manually:**
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+**Production build** (optional, same port):
+
+```bash
+cd web
+npm install
+npm run build
+npm start
+```
+
+Open **http://localhost:5099** in your browser. You can browse cases, accounts, projects, known issues, docs, templates, archive, and search. The UI is optional; Cursor can use the workspace without it.
+
+## Reconfiguring
+
+Need to add GitHub or update config? Tell Cursor *"reconfigure my workspace"* or run:
+
+```bash
+python3 scripts/setup.py --reconfigure
+```
+
+## Safety
+
+- All `cases/` and `archive/` folders are gitignored (customer data never committed)
+- Credentials stay local (gitignored)
+- Cursor confirms before sending public comments to customers
+
