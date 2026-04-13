@@ -4,11 +4,11 @@ Centralized Cursor workspace for Datadog Technical Support Engineers. Investigat
 
 ## Setup (2 minutes)
 
-**Prerequisites:** [Cursor](https://cursor.com), Git
+**Prerequisites:** [Cursor](https://cursor.com), Git, [Node.js](https://nodejs.org) (v18+, for the web UI)
 
 1. **Clone and open**
    ```bash
-   git clone https://github.com/eoghanm2013/tse-investigation-hub.git
+   git clone https://github.com/RMacW98/-tse-investigation-hub.git
    ```
    Open the folder in Cursor.
 
@@ -33,11 +33,15 @@ Ask Cursor things like:
 - *"Search Confluence for APM troubleshooting"* -- finds internal docs
 - *"Search Glean for recent security product updates"* -- searches Slack, Confluence, everything
 - *"Draft a customer response for ZD-12345"* -- uses communication templates
+- *"Log CVAT for acme-corp: built custom dashboard for their migration"* -- logs a value-add entry to the account
+- *"Show me my open tickets"* -- displays your current Zendesk ticket pool
 
 ## Structure
 
 ```
 cases/           Active investigations (ZD-XXXXX folders, gitignored)
+accounts/        Persistent customer account tracking (QBRs, CVAT, contacts)
+projects/        Discrete work items (presentations, tooling, docs)
 archive/         Resolved cases by month (gitignored)
 docs/            Product troubleshooting docs
 solutions/       Known issues and workarounds
@@ -45,6 +49,48 @@ templates/       Customer communication and escalation templates
 scripts/         Utility scripts (setup, Zendesk client, JIRA client)
 reference/       JIRA project codes, internal references
 ```
+
+## Accounts
+
+Track persistent customer relationships, contacts, QBR schedules, and value-add activities.
+
+**Create an account:**
+```bash
+cp -r accounts/.template accounts/acme-corp
+```
+
+Then fill in the details in `accounts/acme-corp/README.md` and `meta.json` -- org ID, tier, CSM, key contacts, product areas in use.
+
+Each account folder contains:
+- `README.md` -- account overview, contacts, product areas, related cases, and CVAT log
+- `notes.md` -- running notes (append new entries at the top)
+- `tasks.md` -- small action items and requests
+- `meta.json` -- machine-readable metadata (org ID, tier, CSM, QBR dates)
+- `qbrs/` -- monthly QBR notes (e.g. `qbrs/2026-04.md`)
+
+**Log a CVAT entry:** After doing something valuable for a Premier customer, tell Cursor:
+
+- *"Log CVAT for acme-corp: helped them set up custom APM dashboards for their new microservices rollout"*
+
+Cursor rewrites your description as a business-value statement and appends it to the account's README under the Value Adds section.
+
+## Projects
+
+Track discrete work items like presentations, documentation, or tooling with a clear start and end.
+
+**Create a project:**
+```bash
+cp -r projects/.template projects/my-presentation
+```
+
+Then fill in `projects/my-presentation/README.md` and `meta.json` -- type, status, due date, audience, deliverables.
+
+Each project folder contains:
+- `README.md` -- project overview, timeline, deliverables, and resources
+- `notes.md` -- working notes and progress log
+- `meta.json` -- machine-readable metadata (type, status, due date, audience)
+
+Project types: `presentation`, `documentation`, `tooling`, `other`
 
 ## Reconfiguring
 
@@ -55,7 +101,25 @@ python3 scripts/setup.py --reconfigure
 
 ## Local Web UI
 
-Run `./web/run.sh` to launch a browser-based dashboard for browsing cases, archive, and docs without touching the terminal. It's entirely optional — the workspace works fully through Cursor alone — but gives a quick visual overview when you want one.
+The hub includes a Next.js web app for browsing everything visually. Run:
+
+```bash
+./web/run.sh
+```
+
+This starts a local dashboard at **http://localhost:5099** with:
+
+- **Dashboard** -- overview of active cases, accounts, and projects
+- **Cases** -- browse active investigations with response drafts and escalation helpers
+- **Accounts** -- customer account tracking, QBR history, and CVAT logs
+- **Projects** -- track presentations, tooling, and other work items
+- **Known Issues** -- tracked product bugs and workarounds
+- **Docs** -- product troubleshooting documentation
+- **Templates** -- customer communication and escalation templates
+- **Archive** -- resolved cases by month
+- **Search** -- full-text search across all content
+
+The web UI is entirely optional -- the workspace works fully through Cursor alone. Built with Next.js 15, React 19, and Tailwind CSS v4.
 
 ## Safety
 
