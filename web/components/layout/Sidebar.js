@@ -125,7 +125,7 @@ export default function Sidebar({ counts = {} }) {
             </svg>
           </div>
           <div>
-            <div className="text-white font-semibold text-sm">TSE Hub</div>
+            <div className="text-white font-semibold text-sm">PSE Hub</div>
             <div className="text-white/50 text-xs">Customer Support</div>
           </div>
         </div>

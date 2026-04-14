@@ -1,5 +1,5 @@
 #!/bin/bash
-# TSE Hub - Next.js Web UI
+# PSE Hub - Next.js Web UI
 # Usage: ./web/run.sh
 
 set -e
@@ -13,7 +13,7 @@ if [ ! -d "node_modules" ]; then
 fi
 
 echo ""
-echo "  TSE Hub (Next.js) starting at http://localhost:5099"
+echo "  PSE Hub (Next.js) starting at http://localhost:5099"
 echo "  Workspace: $(cd .. && pwd)"
 echo ""
 

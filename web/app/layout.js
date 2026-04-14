@@ -7,8 +7,8 @@ import { getAccounts } from "@/lib/accounts";
 import { getProjects } from "@/lib/projects";
 
 export const metadata = {
-  title: "TSE Hub",
-  description: "TSE Investigation Hub - Customer Support Dashboard",
+  title: "PSE Hub",
+  description: "PSE Investigation Hub - Customer Support Dashboard",
 };
 
 export const dynamic = "force-dynamic";
