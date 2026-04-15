@@ -6,6 +6,12 @@
     "glean_default": {
       "url": "https://datadog-be.glean.com/mcp/default"
     },
+    "slack": {
+      "url": "https://mcp.slack.com/mcp",
+      "auth": {
+        "CLIENT_ID": "{ADD-SLACK-CLIENT-ID}"
+      }
+    },
     "github": {
       "command": "uvx",
       "args": ["mcp-github"],

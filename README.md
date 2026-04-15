@@ -13,16 +13,20 @@ Centralized Cursor workspace for Datadog Technical Support Engineers. Investigat
    Open the folder in Cursor.
 
 2. **Tell Cursor: "Set me up"**
-   Cursor runs the setup script. Atlassian and Glean use SSO (no tokens needed). You'll optionally be asked for a GitHub PAT.
+   Cursor runs `scripts/setup.py`. Atlassian and Glean use SSO (no tokens). You can optionally add a GitHub PAT, and a **Slack MCP OAuth client ID** for direct Slack tools (`https://mcp.slack.com/mcp`). Copy `.cursor/mcp.json.example` to `.cursor/mcp.json` and fill placeholders, or run the script (see `python3 scripts/setup.py --help`).
 
 3. **Restart Cursor** (Cmd+Q, then reopen)
-   Atlassian and Glean will prompt a one-time SSO login on first use.
+   Atlassian and Glean prompt a one-time SSO login on first use. If Slack MCP is configured, **authenticate Slack MCP** when Cursor opens the browser OAuth flow the first time you use a Slack MCP tool.
 
 That's it.
 
 ### Optional: GitHub token
 
 If you want code search, generate a PAT at [github.com/settings/tokens](https://github.com/settings/tokens?type=beta) with Contents + Metadata read. Authorize SSO for the DataDog org.
+
+### Optional: Slack MCP
+
+Add your Slack app **Client ID** under `mcpServers.slack.auth.CLIENT_ID` (see `.cursor/mcp.json.example`). After restart, complete the Slack OAuth prompt once when you first use Slack MCP in Cursor.
 
 ## What you can do
 
@@ -125,10 +129,10 @@ Open **http://localhost:5099** in your browser. You can browse cases, accounts, 
 
 ## Reconfiguring
 
-Need to add GitHub or update config? Tell Cursor *"reconfigure my workspace"* or run:
+Need to add GitHub, Slack MCP, or update config? Tell Cursor *"reconfigure my workspace"* or run (the script rewrites `mcp.json`; pass `--skip-github` / `--skip-slack` or the tokens you want):
 
 ```bash
-python3 scripts/setup.py --reconfigure
+python3 scripts/setup.py --reconfigure --slack-client-id "YOUR_SLACK_CLIENT_ID"
 ```
 
 ## Safety

@@ -17,9 +17,11 @@ When `.cursor/mcp.json` does not exist, or the user asks to "set up", "get start
 
 ## How it works
 
-Atlassian (JIRA + Confluence) and Glean (Slack, internal docs) both use **SSO-based MCP URLs** -- no tokens needed. They will prompt the user to log in via browser on first use.
+Atlassian (JIRA + Confluence) and Glean (internal docs, and Slack via Glean search) use **SSO-based MCP URLs** -- no tokens needed. They will prompt the user to log in via browser on first use.
 
-GitHub is the only server that needs a token, and it's optional.
+**Slack MCP** (direct Slack API tools in Cursor) uses Slack’s hosted MCP at `https://mcp.slack.com/mcp` and requires an **OAuth client ID** in config, then a **one-time browser authentication** when you first use it.
+
+GitHub is optional and uses a Personal Access Token.
 
 ## Step 1: Ask about GitHub
 
@@ -30,23 +32,33 @@ Ask the user if they want GitHub code search (optional). If yes, they need a Git
 
 If they don't need GitHub or don't have a token ready, skip it.
 
-## Step 2: Run the setup script
+## Step 2: Slack MCP client ID
 
-Run the setup script:
+For **Slack MCP**, the user needs the **Slack OAuth client ID** for their Slack app (the value that goes in `auth.CLIENT_ID` for the Slack MCP server). This comes from your Slack app / MCP setup (same app you use for Slack MCP in Cursor). If they do not have it yet, they can skip Slack in setup and add it later by editing `.cursor/mcp.json` or re-running setup with `--reconfigure`.
 
-```
-python3 scripts/setup.py --skip-github
-```
+## Step 3: Run the setup script
 
-Or with a GitHub token:
+Examples (add `--reconfigure` if `.cursor/mcp.json` already exists):
 
 ```
-python3 scripts/setup.py --github-token "GITHUB_TOKEN"
+python3 scripts/setup.py --github-token "GITHUB_TOKEN" --slack-client-id "YOUR_SLACK_CLIENT_ID"
 ```
 
-If the user already has a `.cursor/mcp.json` and wants to reconfigure, add `--reconfigure`.
+SSO servers plus Slack MCP, no GitHub:
 
-## Step 3: Clean up user-local skills (if any)
+```
+python3 scripts/setup.py --skip-github --slack-client-id "YOUR_SLACK_CLIENT_ID"
+```
+
+Atlassian + Glean only (no GitHub, no Slack MCP block):
+
+```
+python3 scripts/setup.py --skip-github --skip-slack
+```
+
+Interactive mode prompts for GitHub and Slack when you omit those flags.
+
+## Step 4: Clean up user-local skills (if any)
 
 Skills are now bundled in the workspace at `.cursor/skills/`. If the user previously had skills installed at `~/.cursor/skills/zendesk-ticket/`, they must be removed to avoid duplicates and path conflicts.
 
@@ -64,20 +76,21 @@ fi
 
 Only remove `zendesk-ticket/` and `_shared/` — leave any other personal skills in `~/.cursor/skills/` untouched.
 
-## Step 4: Post-setup instructions
+## Step 5: Post-setup instructions
 
 After the script succeeds, tell the user:
 
 1. **Restart Cursor** -- Quit completely with Cmd+Q (not just close the window), then reopen the workspace.
 2. **SSO login** -- The first time they use Atlassian or Glean, a browser window will open for SSO login. This is a one-time step.
-3. **Verify** -- After restarting, try: "Search JIRA for recent escalation tickets" to confirm MCP servers loaded.
+3. **Slack MCP authentication** -- If Slack MCP was configured with a client ID, the first time they invoke a Slack MCP tool, Cursor will open a browser flow to **authenticate Slack MCP** (OAuth). Complete that once per workspace/machine as prompted.
+4. **Verify** -- After restarting, try: "Search JIRA for recent escalation tickets" to confirm MCP servers loaded. If Slack MCP is enabled, use a simple Slack MCP action or check that the `slack` server shows as connected in Cursor MCP settings.
 
 # Reconfiguring
 
-If the user needs to add GitHub later or reconfigure, run:
+The setup script **rewrites** `.cursor/mcp.json`. Re-run it with every optional server you want kept: use `--skip-github` / `--skip-slack` to omit GitHub or Slack MCP, or pass `--github-token` / `--slack-client-id` to include them.
 
 ```
-python3 scripts/setup.py --reconfigure --github-token "..."
+python3 scripts/setup.py --reconfigure --skip-github --slack-client-id "YOUR_SLACK_CLIENT_ID"
 ```
 
 Then restart Cursor.

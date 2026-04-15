@@ -3,12 +3,12 @@
 TSE Investigation Hub - Automated Setup
 
 Configures .cursor/mcp.json with MCP servers (Atlassian via SSO, Glean via SSO,
-GitHub via PAT). Atlassian and Glean use SSO URLs -- no tokens needed.
+optional Slack MCP with OAuth client ID, optional GitHub via PAT).
 
 Usage:
     Interactive:  python3 scripts/setup.py
-    With args:    python3 scripts/setup.py --github-token XXX
-    Minimal:      python3 scripts/setup.py --skip-github
+    With args:    python3 scripts/setup.py --github-token XXX --slack-client-id YYY
+    Minimal:      python3 scripts/setup.py --skip-github --skip-slack
 """
 
 import argparse
@@ -23,6 +23,7 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 
 ATLASSIAN_MCP_URL = "https://mcp.atlassian.com/v1/mcp"
 GLEAN_MCP_URL = "https://datadog-be.glean.com/mcp/default"
+SLACK_MCP_URL = "https://mcp.slack.com/mcp"
 JIRA_PROJECT_KEY = ""
 
 
@@ -60,8 +61,8 @@ def install_uv() -> bool:
         return False
 
 
-def write_mcp_json(github_token: str = "") -> Path:
-    """Generate .cursor/mcp.json with SSO-based servers + optional GitHub."""
+def write_mcp_json(github_token: str = "", slack_client_id: str = "") -> Path:
+    """Generate .cursor/mcp.json with SSO-based servers + optional Slack + optional GitHub."""
     cursor_dir = ROOT_DIR / ".cursor"
     cursor_dir.mkdir(exist_ok=True)
     mcp_path = cursor_dir / "mcp.json"
@@ -79,6 +80,13 @@ def write_mcp_json(github_token: str = "") -> Path:
         "type": "http",
         "url": GLEAN_MCP_URL,
     }
+
+    # Slack MCP: OAuth client ID in config; user completes browser auth on first use
+    if slack_client_id:
+        config["mcpServers"]["slack"] = {
+            "url": SLACK_MCP_URL,
+            "auth": {"CLIENT_ID": slack_client_id},
+        }
 
     # GitHub: needs a PAT
     if github_token:
@@ -123,6 +131,8 @@ def main():
     parser = argparse.ArgumentParser(description="TSE Investigation Hub Setup")
     parser.add_argument("--github-token", default="", help="GitHub PAT (optional)")
     parser.add_argument("--skip-github", action="store_true", help="Skip GitHub setup")
+    parser.add_argument("--slack-client-id", default="", help="Slack MCP OAuth CLIENT_ID (optional)")
+    parser.add_argument("--skip-slack", action="store_true", help="Skip Slack MCP (omit from mcp.json)")
     parser.add_argument("--reconfigure", action="store_true", help="Overwrite existing config files")
     args = parser.parse_args()
 
@@ -145,8 +155,20 @@ def main():
         print("GitHub requires a Personal Access Token (optional).\n")
         github_token = prompt("GitHub PAT (Enter to skip)", required=False)
 
+    slack_client_id = ""
+    if args.skip_slack:
+        slack_client_id = ""
+    elif args.slack_client_id:
+        slack_client_id = args.slack_client_id
+    elif sys.stdin.isatty():
+        print("\nSlack MCP (optional): set CLIENT_ID for https://mcp.slack.com/mcp")
+        print("  You will authenticate in the browser the first time you use a Slack MCP tool.\n")
+        slack_client_id = prompt("Slack MCP CLIENT_ID (Enter to skip)", required=False)
+    else:
+        slack_client_id = ""
+
     print("\nWriting .cursor/mcp.json ...")
-    write_mcp_json(github_token)
+    write_mcp_json(github_token, slack_client_id)
     print(f"  -> {mcp_path}")
 
     print("Writing .env ...")
@@ -172,10 +194,12 @@ def main():
     print("Next steps:")
     print("  1. Restart Cursor (Cmd+Q, then reopen)")
     print("  2. Atlassian and Glean will prompt SSO login on first use")
-    if github_token:
-        print("  3. Test: \"Search JIRA for recent escalation tickets\"")
-    else:
-        print("  3. Test: \"Search JIRA for recent escalation tickets\"")
+    step = 3
+    if slack_client_id:
+        print(f"  {step}. Slack MCP: complete OAuth in the browser when you first use a Slack tool")
+        step += 1
+    print(f"  {step}. Test: \"Search JIRA for recent escalation tickets\"")
+    if not github_token:
         print("     (GitHub skipped -- add later with --reconfigure)")
     print()
 
