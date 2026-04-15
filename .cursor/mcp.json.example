@@ -10,7 +10,7 @@
       "command": "uvx",
       "args": ["mcp-github"],
       "env": {
-        "GITHUB_TOKEN": "YOUR_GITHUB_PAT"
+        "GITHUB_TOKEN": "YOUR_GITHUB_PATH"
       }
     }
   }
