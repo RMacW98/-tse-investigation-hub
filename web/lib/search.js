@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { CASES_DIR, ARCHIVE_DIR, SOLUTIONS_DIR, DOCS_DIR, TEMPLATES_DIR, ROOT } from "./paths.js";
+import { CASES_DIR, ARCHIVE_DIR, DOCS_DIR, TEMPLATES_DIR, ROOT } from "./paths.js";
 
 async function walkMd(dir) {
   const results = [];
@@ -29,7 +29,7 @@ async function walkMd(dir) {
 export async function searchFiles(query, maxResults = 50) {
   const results = [];
   const queryLower = query.toLowerCase();
-  const searchDirs = [CASES_DIR, ARCHIVE_DIR, SOLUTIONS_DIR, DOCS_DIR, TEMPLATES_DIR];
+  const searchDirs = [CASES_DIR, ARCHIVE_DIR, DOCS_DIR, TEMPLATES_DIR];
 
   for (const searchDir of searchDirs) {
     const mdFiles = await walkMd(searchDir);

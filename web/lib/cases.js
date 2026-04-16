@@ -46,13 +46,14 @@ export const ISSUE_TYPE_COLORS = {
 
 async function readMeta(caseDir) {
   const metaPath = path.join(caseDir, "meta.json");
-  const meta = { status: "new", assignee: "", priority: "", issue_type: "" };
+  const meta = { status: "new", assignee: "", priority: "", issue_type: "", title: "" };
   try {
     const data = JSON.parse(await fs.readFile(metaPath, "utf-8"));
     if (VALID_STATUSES.includes(data.status)) meta.status = data.status;
     if (data.assignee) meta.assignee = String(data.assignee).trim();
     if (data.priority) meta.priority = String(data.priority).trim();
     if (data.issue_type) meta.issue_type = String(data.issue_type).trim();
+    if (data.title) meta.title = String(data.title).trim();
   } catch {
     // meta.json missing or invalid
   }
@@ -94,21 +95,24 @@ export async function getCases() {
     const notesPath = path.join(caseDir, "notes.md");
     const readmePath = path.join(caseDir, "README.md");
 
-    let title = caseKey;
-    for (const checkPath of [readmePath, notesPath]) {
-      try {
-        const content = await fs.readFile(checkPath, "utf-8");
-        const heading = content.split("\n")[0].match(/^#\s+(.+)/);
-        if (heading) {
-          title = heading[1].trim();
-          break;
+    const meta = await readMeta(caseDir);
+
+    let title = meta.title || "";
+    if (!title) {
+      for (const checkPath of [readmePath, notesPath]) {
+        try {
+          const content = await fs.readFile(checkPath, "utf-8");
+          const heading = content.split("\n")[0].match(/^#\s+(.+)/);
+          if (heading) {
+            title = heading[1].trim();
+            break;
+          }
+        } catch {
+          // file doesn't exist
         }
-      } catch {
-        // file doesn't exist
       }
     }
-
-    const meta = await readMeta(caseDir);
+    if (!title) title = caseKey;
 
     const mdFiles = (await fs.readdir(caseDir))
       .filter((f) => f.endsWith(".md"))

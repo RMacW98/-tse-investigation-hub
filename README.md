@@ -8,7 +8,7 @@ Centralized Cursor workspace for Datadog Technical Support Engineers. Investigat
 
 1. **Clone and open**
    ```bash
-   git clone https://github.com/RMacW98/-tse-investigation-hub.git
+   git clone https://github.com/RMacW98/pse-investigation-hub.git
    ```
    Open the folder in Cursor.
 

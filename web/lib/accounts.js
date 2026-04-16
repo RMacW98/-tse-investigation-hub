@@ -148,4 +148,54 @@ export async function getAccountDetail(key) {
   return { key, mdFiles, meta, qbrs };
 }
 
+export async function getAccountTasks() {
+  try {
+    await fs.access(ACCOUNTS_DIR);
+  } catch {
+    return [];
+  }
+
+  const entries = await fs.readdir(ACCOUNTS_DIR, { withFileTypes: true });
+  const result = [];
+
+  for (const entry of entries) {
+    if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
+
+    const accountDir = path.join(ACCOUNTS_DIR, entry.name);
+    const tasksPath = path.join(accountDir, "tasks.md");
+
+    let content;
+    try {
+      content = await fs.readFile(tasksPath, "utf-8");
+    } catch {
+      continue;
+    }
+
+    const tasks = [];
+    for (const line of content.split("\n")) {
+      if (/^- \[ \] /.test(line)) {
+        tasks.push({ text: line.replace(/^- \[ \] /, "").trim() });
+      }
+    }
+    if (tasks.length === 0) continue;
+
+    let accountName = entry.name.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    const meta = await readAccountMeta(accountDir);
+    if (meta.account_name) accountName = meta.account_name;
+    const readmePath = path.join(accountDir, "README.md");
+    try {
+      const readme = await fs.readFile(readmePath, "utf-8");
+      const heading = readme.split("\n")[0].match(/^#\s+(?:Account:\s*)?(.+)/);
+      if (heading) accountName = heading[1].trim();
+    } catch {
+      // no readme
+    }
+
+    result.push({ accountKey: entry.name, accountName, tasks });
+  }
+
+  result.sort((a, b) => b.tasks.length - a.tasks.length);
+  return result;
+}
+
 export { readAccountMeta };

@@ -241,11 +241,13 @@ mkdir -p cases/ZD-{{TICKET_ID}}/assets
 {
   "status": "investigating",
   "assignee": "",
-  "priority": "PRIORITY_FROM_TICKET"
+  "priority": "PRIORITY_FROM_TICKET",
+  "title": "TICKET_SUBJECT_LINE"
 }
 ```
 
-Map the Zendesk priority tag to one of: `low`, `normal`, `high`, `urgent`. If no priority tag, use `normal`.
+- Map the Zendesk priority tag to one of: `low`, `normal`, `high`, `urgent`. If no priority tag, use `normal`.
+- Set `title` to the Zendesk ticket subject line (the short summary shown in the ticket header). Keep it concise — this is displayed in the cases list view.
 
 **File 2: `cases/ZD-{{TICKET_ID}}/README.md`** — Quick reference card:
 
